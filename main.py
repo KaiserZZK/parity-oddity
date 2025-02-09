@@ -15,6 +15,7 @@ pygame.display.set_caption('Untitled Gem Platformer')
 # Define game vairables 
 tile_size = 50
 game_over = 0
+main_menu = True
 
 # Load assets
 bg_img = pygame.image.load("assets/img/Background/Gray.png")
@@ -22,6 +23,8 @@ bg_tile_height = bg_img.get_height()
 bg_tile_width = bg_img.get_width()
 
 restart_img = pygame.image.load('assets/img/Button/restart_btn.png')
+start_img = pygame.image.load('assets/img/Button/start_btn.png')
+exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
 
 
 class Button():
@@ -285,6 +288,8 @@ trap_group = pygame.sprite.Group()
 world = World(world_data)
 
 restart_button = Button(screen_width // 2 - 50, screen_height // 2 + 100, restart_img)
+start_button = Button(screen_width // 2 - 350, screen_height // 2, start_img)
+exit_button = Button(screen_width // 2 + 150, screen_height // 2, exit_img)
 run = True 
 
 while run:
@@ -294,20 +299,26 @@ while run:
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
 			screen.blit(bg_img, (x, y))
-			
-	world.draw()
-
-	if game_over == 0:
-		blob_group.update()
 	
-	blob_group.draw(screen)
-	trap_group.draw(screen)
+	if main_menu == True:
+		if exit_button.draw():
+			run = False
+		if start_button.draw():
+			main_menu = False
+	else:
+		world.draw()
 
-	game_over = player.update(game_over)
-	if game_over == -1:
-		if restart_button.draw():
-			player.reset(100, screen_height - 130)
-			game_over = 0
+		if game_over == 0:
+			blob_group.update()
+		
+		blob_group.draw(screen)
+		trap_group.draw(screen)
+
+		game_over = player.update(game_over)
+		if game_over == -1:
+			if restart_button.draw():
+				player.reset(100, screen_height - 130)
+				game_over = 0
 	
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
