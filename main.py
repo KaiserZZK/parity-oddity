@@ -3,6 +3,9 @@ from pygame.locals import *
 
 pygame.init()
 
+clock = pygame.time.Clock()
+fps = 60
+
 screen_width = 1000
 screen_height = 1000
 
@@ -86,17 +89,28 @@ world_data = [
 
 class Player():
 	def __init__(self, x, y):
-		img = pygame.image.load('assets/img/Player/stein_red.png')
-		self.image = pygame.transform.scale(img, (80, 80))
+		self.images_right = []
+		self.images_left = []
+		self.index = 0
+		self.counter = 0
+		for num in range(1, 4):
+			img_right = pygame.image.load(f'assets/img/Player/stein_red_{num}.png')
+			img_right = pygame.transform.scale(img_right, (100, 100))
+			img_left = pygame.transform.flip(img_right, True, False)
+			self.images_right.append(img_right)
+			self.images_left.append(img_left)
+		self.image = self.images_right[self.index]
 		self.rect = self.image.get_rect()
 		self.rect.x = x
 		self.rect.y = y
 		self.vel_y = 0
 		self.jumped = False
+		self.direction = 0
 
 	def update(self):
 		dx = 0
 		dy = 0
+		walk_cooldown = 5
 
 		#get keypresses
 		key = pygame.key.get_pressed()
@@ -107,8 +121,31 @@ class Player():
 			self.jumped = False
 		if key[pygame.K_LEFT]:
 			dx -= 5
+			self.counter += 1
+			self.direction = -1
 		if key[pygame.K_RIGHT]:
 			dx += 5
+			self.counter += 1
+			self.direction = 1
+		if key[pygame.K_LEFT] == False and key[pygame.K_RIGHT] == False:
+			self.counter = 0
+			self.index = 0
+			if self.direction == 1:
+				self.image = self.images_right[self.index]
+			if self.direction == -1:
+				self.image = self.images_left[self.index]
+
+
+		#handle animation
+		if self.counter > walk_cooldown:
+			self.counter = 0	
+			self.index += 1
+			if self.index >= len(self.images_right):
+				self.index = 0
+			if self.direction == 1:
+				self.image = self.images_right[self.index]
+			if self.direction == -1:
+				self.image = self.images_left[self.index]
 
 
 		#add gravity
@@ -138,6 +175,8 @@ world = World(world_data)
 run = True 
 
 while run:
+    
+    clock.tick(fps)
     
     for y in range(0, screen_height, bg_tile_height):
         for x in range(0, screen_width, bg_tile_width): 
