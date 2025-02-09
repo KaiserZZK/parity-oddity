@@ -265,6 +265,7 @@ class Player():
 
 		elif game_over == -1:
 			self.image = self.dead_image
+			draw_text('GAME OVER!', font, blue, (screen_width // 2) - 200, screen_height // 2)
 			if self.rect.y > 200:
 				self.rect.y -= 5
 
@@ -366,6 +367,7 @@ while run:
 				world = reset_level(level)
 				game_over = 0
 			else:
+				draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
 				if restart_button.draw():
 					level = 1
 					#reset level
