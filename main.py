@@ -14,12 +14,23 @@ screen_height = 1000
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Untitled Gem Platformer')
 
+# Define font
+font = pygame.font.SysFont('Bauhaus 93', 70)
+font_score = pygame.font.SysFont('Bauhaus 93', 30)
+
+
 # Define game vairables 
 tile_size = 50
 game_over = 0
 main_menu = True
 level = 0
 max_levels = 7
+score = 0
+
+# Define colors
+white = (255, 255, 255)
+blue = (0, 0, 255)
+
 
 # Load assets
 bg_img = pygame.image.load("assets/img/Background/Gray.png")
@@ -29,6 +40,10 @@ bg_tile_width = bg_img.get_width()
 restart_img = pygame.image.load('assets/img/Button/restart_btn.png')
 start_img = pygame.image.load('assets/img/Button/start_btn.png')
 exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
+
+def draw_text(text, font, text_col, x, y):
+	img = font.render(text, True, text_col)
+	screen.blit(img, (x, y))
 
 #function to reset level
 def reset_level(level):
@@ -106,6 +121,9 @@ class World():
 				if tile == 6:
 					trap = Trap(col_count * tile_size, row_count * tile_size + (tile_size // 2))
 					trap_group.add(trap)
+				if tile == 7:
+					coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
+					coin_group.add(coin)
 				if tile == 8:
 					exit = Exit(col_count * tile_size, row_count * tile_size - (tile_size // 2))
 					exit_group.add(exit)
@@ -141,6 +159,14 @@ class Trap(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.x = x
 		self.rect.y = y
+  
+class Coin(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		pygame.sprite.Sprite.__init__(self)
+		img = pygame.image.load('assets/img/Item/coin.png')
+		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
+		self.rect = self.image.get_rect()
+		self.rect.center = (x, y)
   
 class Exit(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -274,7 +300,12 @@ class Player():
 player = Player(100, screen_height - 130)
 blob_group = pygame.sprite.Group()
 trap_group = pygame.sprite.Group()
+coin_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
+
+#create dummy coin for showing the score
+score_coin = Coin(tile_size // 2, tile_size // 2)
+coin_group.add(score_coin)
 
 #load in level data and create world
 if path.exists(f'map/level{level}_data'):
@@ -306,9 +337,14 @@ while run:
 
 		if game_over == 0:
 			blob_group.update()
+   			#check if a coin has been collected
+			if pygame.sprite.spritecollide(player, coin_group, True):
+				score += 1
+			draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
 		
 		blob_group.draw(screen)
 		trap_group.draw(screen)
+		coin_group.draw(screen)
 		exit_group.draw(screen)
 
 		game_over = player.update(game_over)
