@@ -1,8 +1,11 @@
 import pygame 
 from pygame.locals import * 
+from pygame import mixer
 import pickle 
 from os import path
 
+pygame.mixer.pre_init(44100, -16, 2, 512)
+mixer.init()
 pygame.init()
 
 clock = pygame.time.Clock()
@@ -32,7 +35,7 @@ white = (255, 255, 255)
 blue = (0, 0, 255)
 
 
-# Load assets
+# Load visual assets
 bg_img = pygame.image.load("assets/img/Background/Gray.png")
 bg_tile_height = bg_img.get_height()
 bg_tile_width = bg_img.get_width()
@@ -40,6 +43,16 @@ bg_tile_width = bg_img.get_width()
 restart_img = pygame.image.load('assets/img/Button/restart_btn.png')
 start_img = pygame.image.load('assets/img/Button/start_btn.png')
 exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
+
+# Load audio assets
+pygame.mixer.music.load('assets/aud/music.wav')
+pygame.mixer.music.play(-1, 0.0, 5000)
+coin_fx = pygame.mixer.Sound('assets/aud/coin.wav')
+coin_fx.set_volume(0.5)
+jump_fx = pygame.mixer.Sound('assets/aud/jump.wav')
+jump_fx.set_volume(0.5)
+game_over_fx = pygame.mixer.Sound('assets/aud/game_over.wav')
+game_over_fx.set_volume(0.5)
 
 def draw_text(text, font, text_col, x, y):
 	img = font.render(text, True, text_col)
@@ -190,6 +203,7 @@ class Player():
 			#get keypresses
 			key = pygame.key.get_pressed()
 			if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
+				jump_fx.play()
 				self.vel_y = -15
 				self.jumped = True
 			if key[pygame.K_SPACE] == False:
@@ -250,10 +264,12 @@ class Player():
 				#check for collision with enemies
 				if pygame.sprite.spritecollide(self, blob_group, False):
 					game_over = -1
+					game_over_fx.play()
 
 				#check for collision with trap
 				if pygame.sprite.spritecollide(self, trap_group, False):
 					game_over = -1
+					game_over_fx.play()
      
 				#check for collision with exit
 				if pygame.sprite.spritecollide(self, exit_group, False):
@@ -341,6 +357,7 @@ while run:
    			#check if a coin has been collected
 			if pygame.sprite.spritecollide(player, coin_group, True):
 				score += 1
+				coin_fx.play()
 			draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
 		
 		blob_group.draw(screen)
