@@ -1,4 +1,5 @@
 import pygame 
+import math 
 from pygame.locals import * 
 from pygame import mixer
 import pickle 
@@ -25,7 +26,7 @@ font_score = pygame.font.SysFont('Bauhaus 93', 30)
 # Define game vairables 
 tile_size = 10
 game_over = 0
-main_menu = True
+main_menu = False # disable main menu 
 level = 1
 max_levels = 7
 score = 0
@@ -192,7 +193,39 @@ class Exit(pygame.sprite.Sprite):
 
 class Player():
 	def __init__(self, x, y):
-		self.reset(x, y)
+		self.reset(x, y) 
+  
+
+	def crash_land(self):
+		self.vel_x = 100
+		dx = 0
+		dy = 0  
+
+		#add gravity
+		self.vel_y += 1
+		
+		dy += self.vel_y
+
+		#check for collision
+		self.in_air = True
+		for tile in world.tile_list:
+			#check for collision in x direction
+			if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+				dx = 0
+			#check for collision in y direction
+			if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+				print("boom!")
+				self.image = None 
+				return True  
+
+		#update player coordinates
+		self.rect.x += dx
+		self.rect.y += dy
+
+		#draw player onto screen
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		return False 
+
 
 	def update(self, game_over, offset_x):
 		dx = 0
@@ -203,7 +236,8 @@ class Player():
 			#get keypresses
 			key = pygame.key.get_pressed()
 			# if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
-			if key[pygame.K_SPACE] and self.jumped == False: # enabling infinit jump
+			if key[pygame.K_SPACE] and self.jumped == False: # @zkzh infinit jump enabled; might want 
+    #    to fix this part later 
 				jump_fx.play()
 				self.vel_y = -15
 				self.jumped = True
@@ -323,6 +357,8 @@ class Player():
 
 # Main game loop   
 player = Player(100, screen_height - 800)
+sqr = Player(1, screen_height - 800)
+landed = False 
 blob_group = pygame.sprite.Group()
 trap_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
@@ -367,6 +403,9 @@ while run:
 	else:
 		world.draw(offset_x)
 
+		if not landed: 
+			landed = sqr.crash_land()
+
 		if game_over == 0:
 			blob_group.update()
    			#check if a coin has been collected
@@ -385,7 +424,7 @@ while run:
 		# if (player.rect.right - offset_x >= screen_width)
 		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
                 (player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
-			print("scroll should kick in")
+			# print("scroll should kick in")
 			offset_x += player.vel_x
   
 		# Lose condition met
