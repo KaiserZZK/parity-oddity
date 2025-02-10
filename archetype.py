@@ -11,8 +11,8 @@ pygame.init()
 clock = pygame.time.Clock()
 fps = 60
 
-screen_width = 1000
-screen_height = 1000
+screen_width = 600
+screen_height = 600
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Untitled Gem Platformer')
@@ -23,10 +23,10 @@ font_score = pygame.font.SysFont('Bauhaus 93', 30)
 
 
 # Define game vairables 
-tile_size = 50
+tile_size = 10
 game_over = 0
 main_menu = True
-level = 0
+level = 1
 max_levels = 7
 score = 0
 
@@ -66,8 +66,8 @@ def reset_level(level):
 	exit_group.empty()
 
 	#load in level data and create world
-	if path.exists(f'map/level{level}_data'):
-		pickle_in = open(f'map/level{level}_data', 'rb')
+	if path.exists(f'level{level}_data'):
+		pickle_in = open(f'level{level}_data', 'rb')
 		world_data = pickle.load(pickle_in)
 	world = World(world_data)
 
@@ -143,9 +143,9 @@ class World():
 				col_count += 1
 			row_count += 1
 
-	def draw(self):
+	def draw(self, offset_x):
 		for tile in self.tile_list:
-			screen.blit(tile[0], tile[1])
+			screen.blit(tile[0], (tile[1].x - offset_x, tile[1].y))
 
 class Enemy(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -194,7 +194,7 @@ class Player():
 	def __init__(self, x, y):
 		self.reset(x, y)
 
-	def update(self, game_over):
+	def update(self, game_over, offset_x):
 		dx = 0
 		dy = 0
 		walk_cooldown = 5
@@ -210,10 +210,12 @@ class Player():
 			if key[pygame.K_SPACE] == False:
 				self.jumped = False
 			if key[pygame.K_LEFT]:
+				self.vel_x = -1
 				dx -= 5
 				self.counter += 1
 				self.direction = -1
 			if key[pygame.K_RIGHT]:
+				self.vel_x = 1
 				dx += 5
 				self.counter += 1
 				self.direction = 1
@@ -291,7 +293,7 @@ class Player():
 				self.rect.y -= 5
 
 		#draw player onto screen
-		screen.blit(self.image, self.rect)
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
   
 		return game_over 
 
@@ -313,13 +315,14 @@ class Player():
 		self.rect.y = y
 		self.width = self.image.get_width()
 		self.height = self.image.get_height()
+		self.vel_x = 0 
 		self.vel_y = 0
 		self.jumped = False
 		self.direction = 0
 		self.in_air = True
 
 # Main game loop   
-player = Player(100, screen_height - 130)
+player = Player(100, screen_height - 800)
 blob_group = pygame.sprite.Group()
 trap_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
@@ -330,8 +333,11 @@ score_coin = Coin(tile_size // 2, tile_size // 2)
 coin_group.add(score_coin)
 
 #load in level data and create world
-if path.exists(f'map/level{level}_data'):
-	pickle_in = open(f'map/level{level}_data', 'rb')
+if path.exists(f'level{level}_data'):
+	pickle_in = open(f'level{level}_data', 'rb')
+#  TODO @zkzh depending on the size, may wan to split map into 4/more parts
+#   build them separately (so that each won't be too small & hard to see)
+#   and when eventually need to render them in game, piece them back  
 	world_data = pickle.load(pickle_in)
 
 world = World(world_data)
@@ -339,6 +345,10 @@ world = World(world_data)
 restart_button = Button(screen_width // 2 - 50, screen_height // 2 + 100, restart_img)
 start_button = Button(screen_width // 2 - 350, screen_height // 2, start_img)
 exit_button = Button(screen_width // 2 + 150, screen_height // 2, exit_img)
+
+offset_x = 0 
+scroll_area_width = 200
+
 run = True 
 
 while run:
@@ -355,7 +365,7 @@ while run:
 		if start_button.draw():
 			main_menu = False
 	else:
-		world.draw()
+		world.draw(offset_x)
 
 		if game_over == 0:
 			blob_group.update()
@@ -370,7 +380,13 @@ while run:
 		coin_group.draw(screen)
 		exit_group.draw(screen)
 
-		game_over = player.update(game_over)
+		game_over = player.update(game_over,  offset_x)
+  
+		# if (player.rect.right - offset_x >= screen_width)
+		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
+                (player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
+			print("scroll should kick in")
+			offset_x += player.vel_x
   
 		# Lose condition met
 		if game_over == -1:

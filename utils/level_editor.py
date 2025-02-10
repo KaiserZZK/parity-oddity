@@ -9,8 +9,8 @@ clock = pygame.time.Clock()
 fps = 60
 
 #game window
-tile_size = 50
-cols = 20
+tile_size = 10
+cols = 100
 margin = 100
 screen_width = tile_size * cols
 screen_height = (tile_size * cols) + margin
@@ -48,16 +48,16 @@ font = pygame.font.SysFont('Futura', 24)
 
 #create empty tile list
 world_data = []
-for row in range(20):
-	r = [0] * 20
+for row in range(100):
+	r = [0] * 100
 	world_data.append(r)
 
 #create boundary
-for tile in range(0, 20):
+for tile in range(0, 100):
 	world_data[19][tile] = 2
-	world_data[0][tile] = 1
-	world_data[tile][0] = 1
-	world_data[tile][19] = 1
+	# world_data[0][tile] = 1
+	# world_data[tile][0] = 1
+	# world_data[tile][19] = 1
 
 #function for outputting text onto the screen
 def draw_text(text, font, text_col, x, y):
@@ -73,8 +73,8 @@ def draw_grid():
 
 
 def draw_world():
-	for row in range(20):
-		for col in range(20):
+	for row in range(100):
+		for col in range(100):
 			if world_data[row][col] > 0:
 				if world_data[row][col] == 1:
 					#dirt blocks
@@ -162,8 +162,8 @@ while run:
 		pickle_out.close()
 	if load_button.draw():
 		#load in level data
-		if path.exists(f'map/level{level}_data'):
-			pickle_in = open(f'map/level{level}_data', 'rb')
+		if path.exists(f'level{level}_data'):
+			pickle_in = open(f'level{level}_data', 'rb')
 			world_data = pickle.load(pickle_in)
 
 
@@ -188,7 +188,7 @@ while run:
 			x = pos[0] // tile_size
 			y = pos[1] // tile_size
 			#check that the coordinates are within the tile area
-			if x < 20 and y < 20:
+			if x < 100 and y < 100:
 				#update tile value
 				if pygame.mouse.get_pressed()[0] == 1:
 					world_data[y][x] += 1
