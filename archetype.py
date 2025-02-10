@@ -202,7 +202,8 @@ class Player():
 		if game_over == 0:
 			#get keypresses
 			key = pygame.key.get_pressed()
-			if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
+			# if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
+			if key[pygame.K_SPACE] and self.jumped == False: # enabling infinit jump
 				jump_fx.play()
 				self.vel_y = -15
 				self.jumped = True
@@ -239,8 +240,12 @@ class Player():
 
 			#add gravity
 			self.vel_y += 1
-			if self.vel_y > 10:
-				self.vel_y = 10
+			if key[pygame.K_RIGHT] or key[pygame.K_LEFT]:
+				if self.vel_y > 2:
+					self.vel_y = 2
+			else:
+				if self.vel_y > 10:
+					self.vel_y = 10
 			dy += self.vel_y
 
 			#check for collision
