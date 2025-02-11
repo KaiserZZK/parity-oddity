@@ -104,7 +104,7 @@ class Button():
 		return action
 
 def tile_variant(row, col):
-    return (hash((row, col)) % 6) + 1
+	return (hash((row, col)) % 6) + 1
 
 class World():
 	def __init__(self, data):
@@ -241,12 +241,13 @@ class Player():
 		if game_over == 0:
 			#get keypresses
 			key = pygame.key.get_pressed()
-			# if key[pygame.K_SPACE] and self.jumped == False and self.in_air == False:
-			if key[pygame.K_SPACE] and self.jumped == False: # @zkzh infinit jump enabled; might want 
-    #    to fix this part later 
+			if key[pygame.K_SPACE] and self.jumped == False and (self.in_air == False or (self.in_air and self.jump_count < 2)):
+				if (self.in_air and self.jump_count < 2):
+					print("double jump triggered")
 				jump_fx.play()
 				self.vel_y = -15
 				self.jumped = True
+				self.jump_count += 1
 			if key[pygame.K_SPACE] == False:
 				self.jumped = False
 			if key[pygame.K_LEFT]:
@@ -282,9 +283,11 @@ class Player():
 
 			#add gravity
 			self.vel_y += 1
-			if key[pygame.K_RIGHT] or key[pygame.K_LEFT]:
-				if self.vel_y > 2:
-					self.vel_y = 2
+			if (key[pygame.K_RIGHT] or key[pygame.K_LEFT]) and self.jump_count >= 2:
+				# glide
+				print("weeeeee")
+				if self.vel_y > 1:
+					self.vel_y = 1
 			else:
 				if self.vel_y > 10:
 					self.vel_y = 10
@@ -307,6 +310,10 @@ class Player():
 						dy = tile[1].top - self.rect.bottom
 						self.vel_y = 0
 						self.in_air = False
+					if self.jump_count > 0:
+						print("landed...")
+					self.jump_count = 0 
+					
 		
 				#check for collision with enemies
 				if pygame.sprite.spritecollide(self, blob_group, False):
@@ -318,7 +325,7 @@ class Player():
 				# if pygame.sprite.spritecollide(self, trap_group, False):
 				# 	game_over = -1
 				# 	game_over_fx.play()
-     
+	 
 				#check for collision with exit
 				if pygame.sprite.spritecollide(self, exit_group, False):
 					game_over = 1
@@ -361,6 +368,7 @@ class Player():
 		self.jumped = False
 		self.direction = 0
 		self.in_air = True
+		self.jump_count = 0
 
 # Main game loop   
 player = Player(100, screen_height - 800)
@@ -378,9 +386,6 @@ coin_group.add(score_coin)
 #load in level data and create world
 if path.exists(f'level{level}_data'):
 	pickle_in = open(f'level{level}_data', 'rb')
-#  TODO @zkzh depending on the size, may wan to split map into 4/more parts
-#   build them separately (so that each won't be too small & hard to see)
-#   and when eventually need to render them in game, piece them back  
 	world_data = pickle.load(pickle_in)
 
 world = World(world_data)
@@ -430,7 +435,7 @@ while run:
   
 		# if (player.rect.right - offset_x >= screen_width)
 		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
-                (player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
+				(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
 			# print("scroll should kick in")
 			offset_x += player.vel_x
   
