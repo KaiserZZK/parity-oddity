@@ -65,7 +65,7 @@ def draw_text(text, font, text_col, x, y):
 	screen.blit(img, (x, y))
 
 def draw_grid():
-	for c in range(21):
+	for c in range(cols+1):
 		#vertical lines
 		pygame.draw.line(screen, white, (c * tile_size, 0), (c * tile_size, screen_height - margin))
 		#horizontal lines
@@ -73,8 +73,8 @@ def draw_grid():
 
 
 def draw_world():
-	for row in range(100):
-		for col in range(100):
+	for row in range(cols):
+		for col in range(cols):
 			if world_data[row][col] > 0:
 				if world_data[row][col] == 1:
 					#dirt blocks
