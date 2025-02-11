@@ -59,7 +59,7 @@ def draw_grid(scale):
 		pygame.draw.line(screen, white, (0, c * tile_size * scale), (screen_width, c * tile_size * scale))
 
 
-def draw_world(map_height, map_width, scale_factor):
+def draw_world(map_height, map_width, scale_factor, dx, dy):
 	map_rows = map_height // tile_size
 	map_cols = map_width // tile_size 
 	for row in range(map_rows):
@@ -68,15 +68,15 @@ def draw_world(map_height, map_width, scale_factor):
 				if world_data[row][col] == 1:
 					#dirt blocks
 					img = pygame.transform.scale(dirt_img, (tile_size * scale_factor, tile_size * scale_factor))
-					screen.blit(img, (col * tile_size * scale_factor, row * tile_size * scale_factor))
+					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
 				if world_data[row][col] == 2:
 					#grass blocks
-					img = pygame.transform.scale(grass_img, (tile_size, tile_size))
-					screen.blit(img, (col * tile_size, row * tile_size))
+					img = pygame.transform.scale(grass_img, (tile_size * scale_factor, tile_size * scale_factor))
+					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
 				if world_data[row][col] == 3:
 					#enemy blocks
-					img = pygame.transform.scale(blob_img, (tile_size, int(tile_size * 0.75)))
-					screen.blit(img, (col * tile_size, row * tile_size + (tile_size * 0.25)))
+					img = pygame.transform.scale(blob_img, (tile_size * scale_factor, int(tile_size * 0.75) * scale_factor))
+					screen.blit(img, (col * tile_size * scale_factor + dx, (row * tile_size + (tile_size * 0.25)) * scale_factor + dy))
 				if world_data[row][col] == 4:
 					#horizontally moving platform
 					img = pygame.transform.scale(platform_x_img, (tile_size, tile_size // 2))
@@ -87,16 +87,16 @@ def draw_world(map_height, map_width, scale_factor):
 					screen.blit(img, (col * tile_size, row * tile_size))
 				if world_data[row][col] == 6:
 					#lava
-					img = pygame.transform.scale(lava_img, (tile_size, tile_size // 2))
-					screen.blit(img, (col * tile_size, row * tile_size + (tile_size // 2)))
+					img = pygame.transform.scale(lava_img, (tile_size * scale_factor, (tile_size // 2) * scale_factor))
+					screen.blit(img, (col * tile_size * scale_factor + dx, (row * tile_size + (tile_size // 2)) * scale_factor + dy))
 				if world_data[row][col] == 7:
 					#coin
-					img = pygame.transform.scale(coin_img, (tile_size // 2, tile_size // 2))
-					screen.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
+					img = pygame.transform.scale(coin_img, ((tile_size // 2) * scale_factor, (tile_size // 2) * scale_factor))
+					screen.blit(img, ((col * tile_size + (tile_size // 4)) * scale_factor + dx, (row * tile_size + (tile_size // 4)) * scale_factor + dy))
 				if world_data[row][col] == 8:
 					#exit
-					img = pygame.transform.scale(exit_img, (tile_size, int(tile_size * 1.5)))
-					screen.blit(img, (col * tile_size, row * tile_size - (tile_size // 2)))
+					img = pygame.transform.scale(exit_img, (tile_size * scale_factor, int(tile_size * 1.5) * scale_factor))
+					screen.blit(img, ((col * tile_size) * scale_factor + dx, (row * tile_size - (tile_size // 2)) * scale_factor + dy))
 
 
 
@@ -173,6 +173,8 @@ def shrink_world_data(world_data, lx, rx, ly, ry):
 	return world_data
 
 scale_factor = 1.0
+offset_x, offset_y = 0, 0
+offset_delta = 20
 
 #main game loop
 run = True
@@ -185,7 +187,7 @@ while run:
 	for y in range(0, map_height, bg_tile_height):
 		for x in range(0, map_width, bg_tile_width): 
 			bg_img = pygame.transform.scale(bg_img, (bg_tile_width * scale_factor, bg_tile_height * scale_factor))
-			screen.blit(bg_img, (x * scale_factor, y * scale_factor))
+			screen.blit(bg_img, (x * scale_factor + offset_x, y * scale_factor + offset_y))
 
 	#load and save level
 	if save_button.draw():
@@ -203,7 +205,7 @@ while run:
 
 	#show the grid and draw the level tiles
 	draw_grid(scale_factor)
-	draw_world(map_height=map_height, map_width=map_width, scale_factor=scale_factor)
+	draw_world(map_height=map_height, map_width=map_width, scale_factor=scale_factor, dx=offset_x, dy=offset_y)
 
 
 	#text showing current level
@@ -220,8 +222,8 @@ while run:
 		if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
 			clicked = True 
 			pos = pygame.mouse.get_pos()
-			x = int(pos[0] // (tile_size * scale_factor))
-			y = int(pos[1] // (tile_size * scale_factor))
+			x = int((pos[0] - offset_x) // (tile_size * scale_factor)) 
+			y = int((pos[1] + offset_y) // (tile_size * scale_factor)) 
 			#check that the coordinates are within the tile area
 			if x < (map_width//tile_size) and y < (map_height//tile_size):
 				#update tile value
@@ -237,10 +239,15 @@ while run:
 			clicked = False
 		#up and down key presses to change level number
 		if event.type == pygame.KEYDOWN:
+			# Originally used for level increment; we change it to panning instead
 			if event.key == pygame.K_UP:
-				level += 1
-			elif event.key == pygame.K_DOWN and level > 1:
-				level -= 1 
+				offset_y += offset_delta * scale_factor
+			elif event.key == pygame.K_DOWN:
+				offset_y -= offset_delta * scale_factor
+			elif event.key == pygame.K_LEFT:
+				offset_x += offset_delta * scale_factor
+			elif event.key == pygame.K_RIGHT:
+				offset_x -= offset_delta * scale_factor
 			elif event.key == pygame.K_RETURN:
 				lx, rx, ly, ry = text.split(",")
 				lx, rx, ly, ry = int(lx), int(rx), int(ly), int(ry)
