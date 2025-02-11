@@ -237,13 +237,18 @@ class Player():
 		dx = 0
 		dy = 0
 		walk_cooldown = 5
-  
+
+		jump = False 
+		double_jump = False 
+		# @zkzh handld mirroring for speical sprites (actually just flying)
 		if game_over == 0:
 			#get keypresses
 			key = pygame.key.get_pressed()
 			if key[pygame.K_SPACE] and self.jumped == False and (self.in_air == False or (self.in_air and self.jump_count < 2)):
 				if (self.in_air and self.jump_count < 2):
-					print("double jump triggered")
+					double_jump = True 
+				else: 
+					jump = True 
 				jump_fx.play()
 				self.vel_y = -15
 				self.jumped = True
@@ -270,24 +275,38 @@ class Player():
 
 
 			#handle animation
-			if self.counter > walk_cooldown:
-				self.counter = 0	
-				self.index += 1
-				if self.index >= len(self.images_right):
-					self.index = 0
+			if double_jump:
+				double_jump_img = pygame.image.load(f'assets/img/Player/double_jump.png')
+				self.image = pygame.transform.scale(double_jump_img, (80, 80)) 
+				double_jump = False 
+			elif jump:
+				jump_img = pygame.image.load(f'assets/img/Player/regular_jump.png')
+				self.image = pygame.transform.scale(jump_img, (80, 80))
+				jump = False 
+			else:
+				if self.counter > walk_cooldown:
+					self.counter = 0	
+					self.index += 1
+					if self.index >= len(self.images_right):
+						self.index = 0
 				if self.direction == 1:
-					self.image = self.images_right[self.index]
+					if self.in_air:
+						self.image = self.fly_images_right[self.index]
+					else:
+						self.image = self.images_right[self.index]
 				if self.direction == -1:
-					self.image = self.images_left[self.index]
+					if self.in_air:
+						self.image = self.fly_images_left[self.index]
+					else:
+						self.image = self.images_left[self.index]
 
 
 			#add gravity
 			self.vel_y += 1
 			if (key[pygame.K_RIGHT] or key[pygame.K_LEFT]) and self.jump_count >= 2:
 				# glide
-				print("weeeeee")
-				if self.vel_y > 1:
-					self.vel_y = 1
+				if self.vel_y > .5:
+					self.vel_y = .5
 			else:
 				if self.vel_y > 10:
 					self.vel_y = 10
@@ -348,14 +367,21 @@ class Player():
 	def reset(self, x, y):
 		self.images_right = []
 		self.images_left = []
+		self.fly_images_right = []
+		self.fly_images_left = []
 		self.index = 0
 		self.counter = 0
 		for num in range(1, 4):
-			img_right = pygame.image.load(f'assets/img/Player/stein_red_{num}.png')
+			img_right = pygame.image.load(f'assets/img/Player/stein_red_new_{num}.png')
 			img_right = pygame.transform.scale(img_right, (80, 80))
 			img_left = pygame.transform.flip(img_right, True, False)
 			self.images_right.append(img_right)
 			self.images_left.append(img_left)
+			fly_img_right = pygame.image.load(f'assets/img/Player/fly_{num}.png')
+			fly_img_right = pygame.transform.scale(fly_img_right, (80, 80))
+			fly_img_left = pygame.transform.flip(fly_img_right, True, False)
+			self.fly_images_right.append(fly_img_right)
+			self.fly_images_left.append(fly_img_left)
 		self.dead_image = pygame.image.load('assets/img/Player/ghost.png')
 		self.image = self.images_right[self.index]
 		self.rect = self.image.get_rect()
