@@ -12,8 +12,8 @@ pygame.init()
 clock = pygame.time.Clock()
 fps = 60
 
-screen_width = 600
-screen_height = 600
+screen_width = 1000
+screen_height = 800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Untitled Gem Platformer')
@@ -24,7 +24,7 @@ font_score = pygame.font.SysFont('Bauhaus 93', 30)
 
 
 # Define game vairables 
-tile_size = 10
+tile_size = 50
 game_over = 0
 main_menu = False # disable main menu 
 level = 1
@@ -37,7 +37,7 @@ blue = (0, 0, 255)
 
 
 # Load visual assets
-bg_img = pygame.image.load("assets/img/Background/Gray.png")
+bg_img = pygame.image.load("assets/img/Background/Blue.png")
 bg_tile_height = bg_img.get_height()
 bg_tile_width = bg_img.get_width()
 
@@ -103,12 +103,15 @@ class Button():
 
 		return action
 
+def tile_variant(row, col):
+    return (hash((row, col)) % 6) + 1
+
 class World():
 	def __init__(self, data):
 		self.tile_list = []
 
 		#load images
-		dirt_img = pygame.image.load('assets/img/Terrain/dirt.png')
+		dirt_imgs = [pygame.image.load(f'assets/img/Terrain/dirt_{i}.png') for i in range(1,7)]
 		grass_img = pygame.image.load('assets/img/Terrain/grass.png')
 
 		row_count = 0
@@ -116,7 +119,7 @@ class World():
 			col_count = 0
 			for tile in row:
 				if tile == 1:
-					img = pygame.transform.scale(dirt_img, (tile_size, tile_size))
+					img = pygame.transform.scale(dirt_imgs[tile_variant(row_count,col_count)-1], (tile_size, tile_size))
 					img_rect = img.get_rect()
 					img_rect.x = col_count * tile_size
 					img_rect.y = row_count * tile_size
@@ -164,12 +167,15 @@ class Enemy(pygame.sprite.Sprite):
 		if abs(self.move_counter) > 50:
 			self.move_direction *= -1
 			self.move_counter *= -1
-   
+
+# @zkzh bugged--these objects won't move w. offset cuz they lack a draw method 
+
+# @zkzh offset is also bugged--if you go too far left, camera wont follow you back 
 class Trap(pygame.sprite.Sprite):
 	def __init__(self, x, y):
 		pygame.sprite.Sprite.__init__(self)
-		img = pygame.image.load('assets/img/Enemy/trap.png')
-		self.image = pygame.transform.scale(img, (tile_size, tile_size // 2))
+		imgs = [pygame.image.load(f'assets/img/Enemy/dark_nuggets_{i}.png') for i in range(1,7)]
+		self.image = pygame.transform.scale(imgs[tile_variant(x,y)-1], (tile_size, tile_size // 2))
 		self.rect = self.image.get_rect()
 		self.rect.x = x
 		self.rect.y = y
@@ -177,7 +183,7 @@ class Trap(pygame.sprite.Sprite):
 class Coin(pygame.sprite.Sprite):
 	def __init__(self, x, y):
 		pygame.sprite.Sprite.__init__(self)
-		img = pygame.image.load('assets/img/Item/coin.png')
+		img = pygame.image.load('assets/img/Item/blue_nuggets.png')
 		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
@@ -307,10 +313,11 @@ class Player():
 					game_over = -1
 					game_over_fx.play()
 
-				#check for collision with trap
-				if pygame.sprite.spritecollide(self, trap_group, False):
-					game_over = -1
-					game_over_fx.play()
+				# @zkzh this part is now effectively changed; implement drag behavior
+				# #check for collision with trap
+				# if pygame.sprite.spritecollide(self, trap_group, False):
+				# 	game_over = -1
+				# 	game_over_fx.play()
      
 				#check for collision with exit
 				if pygame.sprite.spritecollide(self, exit_group, False):
@@ -338,7 +345,7 @@ class Player():
 		self.counter = 0
 		for num in range(1, 4):
 			img_right = pygame.image.load(f'assets/img/Player/stein_red_{num}.png')
-			img_right = pygame.transform.scale(img_right, (40, 80))
+			img_right = pygame.transform.scale(img_right, (80, 80))
 			img_left = pygame.transform.flip(img_right, True, False)
 			self.images_right.append(img_right)
 			self.images_left.append(img_left)
@@ -401,7 +408,7 @@ while run:
 		if start_button.draw():
 			main_menu = False
 	else:
-		world.draw(offset_x)
+		world.draw(offset_x*5)
 
 		if not landed: 
 			landed = sqr.crash_land()
@@ -419,7 +426,7 @@ while run:
 		coin_group.draw(screen)
 		exit_group.draw(screen)
 
-		game_over = player.update(game_over,  offset_x)
+		game_over = player.update(game_over,  offset_x*5)
   
 		# if (player.rect.right - offset_x >= screen_width)
 		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (

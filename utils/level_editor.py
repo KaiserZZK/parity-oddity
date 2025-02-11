@@ -1,3 +1,4 @@
+import random
 import pygame
 import pickle
 from os import path
@@ -9,11 +10,12 @@ clock = pygame.time.Clock()
 fps = 60
 
 #game window
-tile_size = 10
-cols = 100
+tile_size = 50
+cols = 20
 margin = 100
-screen_width = tile_size * cols
-screen_height = (tile_size * cols) + margin
+screen_width, screen_height = 1000, 800 # same as main game
+# screen_width = tile_size * cols
+# screen_height = (tile_size * cols) + margin
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Level Editor')
@@ -24,13 +26,13 @@ bg_img = pygame.image.load("assets/img/Background/Gray.png")
 bg_tile_height = bg_img.get_height()
 bg_tile_width = bg_img.get_width()
 
-dirt_img = pygame.image.load('assets/img/Terrain/dirt.png')
+dirt_imgs = [pygame.image.load(f'assets/img/Terrain/dirt_{i}.png') for i in range(1,7)]
 grass_img = pygame.image.load('assets/img/Terrain/grass.png')
 blob_img = pygame.image.load('assets/img/Enemy/blob.png')
 platform_x_img = pygame.image.load('assets/img/Terrain/platform_x.png')
 platform_y_img = pygame.image.load('assets/img/Terrain/platform_y.png')
-lava_img = pygame.image.load('assets/img/Enemy/trap.png')
-coin_img = pygame.image.load('assets/img/Item/coin.png')
+lava_imgs = [pygame.image.load(f'assets/img/Enemy/dark_nuggets_{i}.png') for i in range(1,7)]
+coin_img = pygame.image.load('assets/img/Item/blue_nuggets.png')
 exit_img = pygame.image.load('assets/img/Terrain/exit.png')
 save_img = pygame.image.load('assets/img/Button/save_btn.png')
 load_img = pygame.image.load('assets/img/Button/load_btn.png')
@@ -58,6 +60,8 @@ def draw_grid(scale):
 		#horizontal lines
 		pygame.draw.line(screen, white, (0, c * tile_size * scale), (screen_width, c * tile_size * scale))
 
+def tile_variant(row, col):
+    return (hash((row, col)) % 6) + 1
 
 def draw_world(map_height, map_width, scale_factor, dx, dy):
 	map_rows = map_height // tile_size
@@ -67,7 +71,8 @@ def draw_world(map_height, map_width, scale_factor, dx, dy):
 			if world_data[row][col] > 0:
 				if world_data[row][col] == 1:
 					#dirt blocks
-					img = pygame.transform.scale(dirt_img, (tile_size * scale_factor, tile_size * scale_factor))
+					i = tile_variant(row, col)
+					img = pygame.transform.scale(dirt_imgs[i-1], (tile_size * scale_factor, tile_size * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
 				if world_data[row][col] == 2:
 					#grass blocks
@@ -87,7 +92,8 @@ def draw_world(map_height, map_width, scale_factor, dx, dy):
 					screen.blit(img, (col * tile_size, row * tile_size))
 				if world_data[row][col] == 6:
 					#lava
-					img = pygame.transform.scale(lava_img, (tile_size * scale_factor, (tile_size // 2) * scale_factor))
+					i = tile_variant(row, col)
+					img = pygame.transform.scale(lava_imgs[i-1], (tile_size * scale_factor, (tile_size // 2) * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, (row * tile_size + (tile_size // 2)) * scale_factor + dy))
 				if world_data[row][col] == 7:
 					#coin
