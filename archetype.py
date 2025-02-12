@@ -53,7 +53,11 @@ coin_fx.set_volume(0.5)
 jump_fx = pygame.mixer.Sound('assets/aud/jump.wav')
 jump_fx.set_volume(0.5)
 game_over_fx = pygame.mixer.Sound('assets/aud/game_over.wav')
-game_over_fx.set_volume(0.5)
+game_over_fx.set_volume(0.5) 
+
+# Some global vars that track more complex player actions; for instructions display 
+global glide_ever_used
+glide_ever_used = False 
 
 def draw_text(text, font, text_col, x, y):
 	img = font.render(text, True, text_col)
@@ -330,6 +334,8 @@ class Player():
 			self.vel_y += 1
 			if (key[pygame.K_RIGHT] or key[pygame.K_LEFT]) and self.jump_count >= 2:
 				# glide
+				global glide_ever_used
+				glide_ever_used = True 
 				if self.vel_y > .5:
 					self.vel_y = .5
 			else:
@@ -436,7 +442,12 @@ fall_speed = 0
 sliding_ended = False 
 start_sliding_speed = 20
 fly_vertical_speed = 8
-fly_spin = 0
+fly_spin = 0 
+
+# Instructions
+teach_box_size = (300, 200)
+instruction_lr_viewed = False 
+instructuin_jump_viewed = False 
 
 #create dummy coin for showing the score
 # score_coin = Coin(tile_size // 2, tile_size // 2)
@@ -461,6 +472,8 @@ run = True
 while run:
 	
 	clock.tick(fps)
+ 
+	print(player.rect.x, player.rect.y)
 	
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
@@ -473,7 +486,7 @@ while run:
 			main_menu = False
 	else:
 		# print(player.rect.x, player.rect.y)
-		world.draw(offset_x*5)
+		world.draw(offset_x)
 
 		if not landed: 
 			landed, fall_speed = sqr.crash_land(fall_speed)
@@ -481,7 +494,21 @@ while run:
 			fly_vertical_speed, fly_spin = flown_off.bye(fly_vertical_speed, fly_spin)
 			start_sliding_speed, sliding_ended = player.slide(start_sliding_speed)
 		else:
-			game_over = player.update(game_over,  offset_x*5)
+			if not instruction_lr_viewed:
+				instruction = pygame.image.load('assets/img/Player/ghost.png')
+				instruction = pygame.transform.scale(instruction, teach_box_size)
+				screen.blit(instruction, (player.rect.x, player.rect.y-200))
+			elif not instructuin_jump_viewed and player.rect.x >= 840:
+				instruction = pygame.image.load('assets/img/Enemy/trap.png')
+				instruction = pygame.transform.scale(instruction, teach_box_size)
+				screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
+			elif not glide_ever_used and player.rect.x >= 1160:
+				instruction = pygame.image.load('assets/img/Enemy/blob.png')
+				instruction = pygame.transform.scale(instruction, teach_box_size)
+				screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
+				
+
+			game_over = player.update(game_over,  offset_x)
 
 		if game_over == 0:
 			blob_group.update()
@@ -495,14 +522,11 @@ while run:
 		trap_group.draw(screen)
 		coin_group.draw(screen)
 		exit_group.draw(screen)
-
-		
   
-		# if (player.rect.right - offset_x >= screen_width)
 		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
 				(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
 			# print("scroll should kick in")
-			offset_x += player.vel_x
+			offset_x += player.vel_x * 10
   
 		# Lose condition met
 		if game_over == -1:
@@ -532,7 +556,12 @@ while run:
 	
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
-			run = False
+			run = False 
+		if event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+				instruction_lr_viewed = True 
+			if event.key == pygame.K_SPACE:
+				instructuin_jump_viewed = True 
 			
 	pygame.display.update() 
 			
