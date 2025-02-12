@@ -47,7 +47,7 @@ exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
 
 # Load audio assets
 pygame.mixer.music.load('assets/aud/music.wav')
-pygame.mixer.music.play(-1, 0.0, 5000)
+# pygame.mixer.music.play(-1, 0.0, 5000) # disabled for now; annoying af
 coin_fx = pygame.mixer.Sound('assets/aud/coin.wav')
 coin_fx.set_volume(0.5)
 jump_fx = pygame.mixer.Sound('assets/aud/jump.wav')
@@ -201,14 +201,40 @@ class Player():
 	def __init__(self, x, y):
 		self.reset(x, y) 
   
+	def bye(self, vy, curr_rot):
+		piece = pygame.image.load(f'assets/img/Player/rip.png')
+		scaled = pygame.transform.scale(piece, (80, 80))
+		self.image = pygame.transform.rotate(scaled, curr_rot)
+  
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		self.rect.x += vy
+		self.rect.y -= (vy - 0.2)
+		return vy, curr_rot + 5
+			
+  
+	def slide(self, speed):
+		initial_sqr = pygame.image.load(f'assets/img/Player/oomfie.png')
+		self.image = pygame.transform.scale(initial_sqr, (80, 80))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		friction = 0.95
+		speed *= friction
+		while self.rect.x < 422:
+			self.rect.x += speed
+			return (speed, False)
+		
+		return (speed, True)
+  
 
-	def crash_land(self):
+	def crash_land(self, fall_speed):
+		initial_sqr = pygame.image.load(f'assets/img/Player/beginning_s.png')
+		self.image = pygame.transform.scale(initial_sqr, (80, 80))
 		self.vel_x = 100
 		dx = 0
 		dy = 0  
 
 		#add gravity
-		self.vel_y += 1
+		fall_speed += .005
+		self.vel_y += fall_speed
 		
 		dy += self.vel_y
 
@@ -220,9 +246,9 @@ class Player():
 				dx = 0
 			#check for collision in y direction
 			if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-				print("boom!")
-				self.image = None 
-				return True  
+				self.image = None
+				# print("landed at", self.rect.x, self.rect.y)
+				return (True, fall_speed)  
 
 		#update player coordinates
 		self.rect.x += dx
@@ -230,7 +256,7 @@ class Player():
 
 		#draw player onto screen
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
-		return False 
+		return (False, fall_speed)
 
 
 	def update(self, game_over, offset_x):
@@ -240,7 +266,6 @@ class Player():
 
 		jump = False 
 		double_jump = False 
-		# @zkzh handld mirroring for speical sprites (actually just flying)
 		if game_over == 0:
 			#get keypresses
 			key = pygame.key.get_pressed()
@@ -329,8 +354,8 @@ class Player():
 						dy = tile[1].top - self.rect.bottom
 						self.vel_y = 0
 						self.in_air = False
-					if self.jump_count > 0:
-						print("landed...")
+					# if self.jump_count > 0:
+					# 	print("landed...")
 					self.jump_count = 0 
 					
 		
@@ -397,17 +422,25 @@ class Player():
 		self.jump_count = 0
 
 # Main game loop   
-player = Player(100, screen_height - 800)
-sqr = Player(1, screen_height - 800)
-landed = False 
+player = Player(51, 465) # spawn with sliding after fall; may change depending on map changes
+sqr = Player(51, screen_height - 800)
+flown_off = Player(51, 470)
 blob_group = pygame.sprite.Group()
 trap_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
+# Beginning sequence
+landed = False 
+fall_speed = 0
+sliding_ended = False 
+start_sliding_speed = 20
+fly_vertical_speed = 8
+fly_spin = 0
+
 #create dummy coin for showing the score
-score_coin = Coin(tile_size // 2, tile_size // 2)
-coin_group.add(score_coin)
+# score_coin = Coin(tile_size // 2, tile_size // 2)
+# coin_group.add(score_coin)
 
 #load in level data and create world
 if path.exists(f'level{level}_data'):
@@ -439,10 +472,16 @@ while run:
 		if start_button.draw():
 			main_menu = False
 	else:
+		# print(player.rect.x, player.rect.y)
 		world.draw(offset_x*5)
 
 		if not landed: 
-			landed = sqr.crash_land()
+			landed, fall_speed = sqr.crash_land(fall_speed)
+		elif not sliding_ended:
+			fly_vertical_speed, fly_spin = flown_off.bye(fly_vertical_speed, fly_spin)
+			start_sliding_speed, sliding_ended = player.slide(start_sliding_speed)
+		else:
+			game_over = player.update(game_over,  offset_x*5)
 
 		if game_over == 0:
 			blob_group.update()
@@ -450,14 +489,14 @@ while run:
 			if pygame.sprite.spritecollide(player, coin_group, True):
 				score += 1
 				coin_fx.play()
-			draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
+			# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
 		
 		blob_group.draw(screen)
 		trap_group.draw(screen)
 		coin_group.draw(screen)
 		exit_group.draw(screen)
 
-		game_over = player.update(game_over,  offset_x*5)
+		
   
 		# if (player.rect.right - offset_x >= screen_width)
 		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
