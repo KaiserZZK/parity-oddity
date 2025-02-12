@@ -377,7 +377,7 @@ class Player():
 			img_left = pygame.transform.flip(img_right, True, False)
 			self.images_right.append(img_right)
 			self.images_left.append(img_left)
-			fly_img_right = pygame.image.load(f'assets/img/Player/fly_{num}.png')
+			fly_img_right = pygame.image.load(f'assets/img/Player/fly_new_{num}.png')
 			fly_img_right = pygame.transform.scale(fly_img_right, (80, 80))
 			fly_img_left = pygame.transform.flip(fly_img_right, True, False)
 			self.fly_images_right.append(fly_img_right)
