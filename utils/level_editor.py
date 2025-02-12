@@ -61,7 +61,7 @@ def draw_grid(scale):
 		pygame.draw.line(screen, white, (0, c * tile_size * scale), (screen_width, c * tile_size * scale))
 
 def tile_variant(row, col):
-    return (hash((row, col)) % 6) + 1
+	return (hash((row, col)) % 6) + 1
 
 def draw_world(map_height, map_width, scale_factor, dx, dy):
 	map_rows = map_height // tile_size
@@ -134,8 +134,8 @@ class Button():
 		return action
 
 #create load and save buttons
-save_button = Button(screen_width // 2 - 150, screen_height - 80, save_img)
-load_button = Button(screen_width // 2 + 50, screen_height - 80, load_img)
+# save_button = Button(screen_width // 2 - 150, screen_height - 80, save_img)
+# load_button = Button(screen_width // 2 + 50, screen_height - 80, load_img)
 
 # decouple map and screen sizes
 map_height, map_width = 400, 300 # screen_height, screen_width 
@@ -182,6 +182,8 @@ scale_factor = 1.0
 offset_x, offset_y = 0, 0
 offset_delta = 20
 
+previous_loaded = False
+
 #main game loop
 run = True
 while run:
@@ -196,18 +198,18 @@ while run:
 			screen.blit(bg_img, (x * scale_factor + offset_x, y * scale_factor + offset_y))
 
 	#load and save level
-	if save_button.draw():
-		#save level data
-		pickle_out = open(f'level{level}_data', 'wb')
-		pickle.dump(world_data, pickle_out)
-		pickle_out.close()
-	if load_button.draw():
-		#load in level data
-		if path.exists(f'level{level}_data'):
-			pickle_in = open(f'level{level}_data', 'rb')
-			world_data = pickle.load(pickle_in)
-			map_height = len(world_data) * tile_size
-			map_width = len(world_data[0]) * tile_size
+	# if save_button.draw():
+	# 	#save level data
+	# 	pickle_out = open(f'level{level}_data', 'wb')
+	# 	pickle.dump(world_data, pickle_out)
+	# 	pickle_out.close()
+	# if load_button.draw():
+	# 	#load in level data
+	# 	if path.exists(f'level{level}_data'):
+	# 		pickle_in = open(f'level{level}_data', 'rb')
+	# 		world_data = pickle.load(pickle_in)
+	# 		map_height = len(world_data) * tile_size
+	# 		map_width = len(world_data[0]) * tile_size
 
 	#show the grid and draw the level tiles
 	draw_grid(scale_factor)
@@ -269,12 +271,31 @@ while run:
 				text =  text[:-1]
 			else:
 				text += event.unicode 
+    
+			mods = pygame.key.get_mods()
+
+			# Check if Ctrl is held down
+			if mods & pygame.KMOD_CTRL:
+				if event.key == pygame.K_s:
+					if not previous_loaded:
+						print("No previous load performed; cannot save")
+					else:
+						pickle_out = open(f'level{level}_data', 'wb')
+						pickle.dump(world_data, pickle_out)
+						pickle_out.close()
+				elif event.key == pygame.K_l:
+					previous_loaded = True
+					if path.exists(f'level{level}_data'):
+						pickle_in = open(f'level{level}_data', 'rb')
+						world_data = pickle.load(pickle_in)
+						map_height = len(world_data) * tile_size
+						map_width = len(world_data[0]) * tile_size
 	
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			if event.button == 4:  # Scrolling up
 				scale_factor += 0.1
 			elif event.button == 5:  # Scrolling down
-				scale_factor -= 0.1
+				scale_factor -= 0.1			
 	
 		pygame.display.flip()
 

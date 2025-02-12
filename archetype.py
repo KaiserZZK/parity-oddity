@@ -13,7 +13,9 @@ clock = pygame.time.Clock()
 fps = 60
 
 screen_width = 1000
-screen_height = 800
+screen_height = 800 
+final_map_height = 2000
+final_map_width = 2800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Untitled Gem Platformer')
@@ -191,6 +193,10 @@ class Coin(pygame.sprite.Sprite):
 		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
+  
+	def draw(self, offset_x):
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		
   
 class Exit(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -434,7 +440,7 @@ flown_off = Player(51, 470)
 blob_group = pygame.sprite.Group()
 trap_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
-exit_group = pygame.sprite.Group()
+exit_group = pygame.sprite.Group()  
 
 # Beginning sequence
 landed = False 
@@ -459,10 +465,6 @@ if path.exists(f'level{level}_data'):
 	world_data = pickle.load(pickle_in)
 
 world = World(world_data)
-
-restart_button = Button(screen_width // 2 - 50, screen_height // 2 + 100, restart_img)
-start_button = Button(screen_width // 2 - 350, screen_height // 2, start_img)
-exit_button = Button(screen_width // 2 + 150, screen_height // 2, exit_img)
 
 offset_x = 0 
 scroll_area_width = 200
@@ -520,7 +522,8 @@ while run:
 		
 		blob_group.draw(screen)
 		trap_group.draw(screen)
-		coin_group.draw(screen)
+		for coin in coin_group:
+			coin.draw(offset_x)
 		exit_group.draw(screen)
   
 		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
