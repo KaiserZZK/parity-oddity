@@ -69,7 +69,7 @@ def draw_text(text, font, text_col, x, y):
 def reset_level(level):
 	player.reset(100, screen_height - 130)
 	blob_group.empty()
-	trap_group.empty()
+	dark_nugget_group.empty()
 	exit_group.empty()
 
 	#load in level data and create world
@@ -142,8 +142,8 @@ class World():
 					blob = Enemy(col_count * tile_size, row_count * tile_size + 15)
 					blob_group.add(blob)        
 				if tile == 6:
-					trap = Trap(col_count * tile_size, row_count * tile_size + (tile_size // 2))
-					trap_group.add(trap)
+					dark_nugget = DarkNugget(col_count * tile_size, row_count * tile_size + (tile_size // 2))
+					dark_nugget_group.add(dark_nugget)
 				if tile == 7:
 					coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
 					coin_group.add(coin)
@@ -174,10 +174,7 @@ class Enemy(pygame.sprite.Sprite):
 			self.move_direction *= -1
 			self.move_counter *= -1
 
-# @zkzh bugged--these objects won't move w. offset cuz they lack a draw method 
-
-# @zkzh offset is also bugged--if you go too far left, camera wont follow you back 
-class Trap(pygame.sprite.Sprite):
+class DarkNugget(pygame.sprite.Sprite):
 	def __init__(self, x, y):
 		pygame.sprite.Sprite.__init__(self)
 		imgs = [pygame.image.load(f'assets/img/Enemy/dark_nuggets_{i}.png') for i in range(1,7)]
@@ -185,6 +182,24 @@ class Trap(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.x = x
 		self.rect.y = y
+		self.dragging = False  # Flag to track if dragging
+	
+	def draw(self, offset_x):
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+  
+	def drag(self):
+		pos = pygame.mouse.get_pos()
+		mouse_pressed = pygame.mouse.get_pressed()[0]  # Left mouse button
+
+		if self.rect.collidepoint(pos):  # Check if mouse is over object
+			if mouse_pressed and not self.dragging:
+				self.dragging = True  # Start dragging
+		
+		if self.dragging:
+			if mouse_pressed:
+				self.rect.x, self.rect.y = pos[0], pos[1]  # Update position
+			else:
+				self.dragging = False  # Stop dragging when mouse released
   
 class Coin(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -210,6 +225,13 @@ class Exit(pygame.sprite.Sprite):
 class Player():
 	def __init__(self, x, y):
 		self.reset(x, y) 
+  
+	def telekinesis(self):
+		piece = pygame.image.load(f'assets/img/Player/stein_red_1.png')
+		self.image = pygame.transform.scale(piece, (80, 80))
+		screen.blit(self.image, (self.rect.x, self.rect.y))
+		for nugget in dark_nugget_group:
+			nugget.drag()
   
 	def bye(self, vy, curr_rot):
 		piece = pygame.image.load(f'assets/img/Player/rip.png')
@@ -257,7 +279,6 @@ class Player():
 			#check for collision in y direction
 			if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
 				self.image = None
-				# print("landed at", self.rect.x, self.rect.y)
 				return (True, fall_speed)  
 
 		#update player coordinates
@@ -438,9 +459,11 @@ player = Player(51, 465) # spawn with sliding after fall; may change depending o
 sqr = Player(51, screen_height - 800)
 flown_off = Player(51, 470)
 blob_group = pygame.sprite.Group()
-trap_group = pygame.sprite.Group()
+dark_nugget_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()  
+
+stoned = False 
 
 # Beginning sequence
 landed = False 
@@ -475,96 +498,95 @@ while run:
 	
 	clock.tick(fps)
  
-	print(player.rect.x, player.rect.y)
+	# print(player.rect.x, player.rect.y)
 	
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
 			screen.blit(bg_img, (x, y))
 	
-	if main_menu == True:
-		if exit_button.draw():
-			run = False
-		if start_button.draw():
-			main_menu = False
+	world.draw(offset_x)
+
+	if not landed: 
+		landed, fall_speed = sqr.crash_land(fall_speed)
+	elif not sliding_ended:
+		fly_vertical_speed, fly_spin = flown_off.bye(fly_vertical_speed, fly_spin)
+		start_sliding_speed, sliding_ended = player.slide(start_sliding_speed)
 	else:
-		# print(player.rect.x, player.rect.y)
-		world.draw(offset_x)
-
-		if not landed: 
-			landed, fall_speed = sqr.crash_land(fall_speed)
-		elif not sliding_ended:
-			fly_vertical_speed, fly_spin = flown_off.bye(fly_vertical_speed, fly_spin)
-			start_sliding_speed, sliding_ended = player.slide(start_sliding_speed)
-		else:
-			if not instruction_lr_viewed:
-				instruction = pygame.image.load('assets/img/Player/ghost.png')
-				instruction = pygame.transform.scale(instruction, teach_box_size)
-				screen.blit(instruction, (player.rect.x, player.rect.y-200))
-			elif not instructuin_jump_viewed and player.rect.x >= 840:
-				instruction = pygame.image.load('assets/img/Enemy/trap.png')
-				instruction = pygame.transform.scale(instruction, teach_box_size)
-				screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
-			elif not glide_ever_used and player.rect.x >= 1160:
-				instruction = pygame.image.load('assets/img/Enemy/blob.png')
-				instruction = pygame.transform.scale(instruction, teach_box_size)
-				screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
-				
-
-			game_over = player.update(game_over,  offset_x)
-
-		if game_over == 0:
-			blob_group.update()
-   			#check if a coin has been collected
-			if pygame.sprite.spritecollide(player, coin_group, True):
-				score += 1
-				coin_fx.play()
-			# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
+		if not instruction_lr_viewed:
+			instruction = pygame.image.load('assets/img/Player/ghost.png')
+			instruction = pygame.transform.scale(instruction, teach_box_size)
+			screen.blit(instruction, (player.rect.x, player.rect.y-200))
+		elif not instructuin_jump_viewed and player.rect.x >= 840:
+			instruction = pygame.image.load('assets/img/Enemy/trap.png')
+			instruction = pygame.transform.scale(instruction, teach_box_size)
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
+		elif not glide_ever_used and player.rect.x >= 1160:
+			instruction = pygame.image.load('assets/img/Enemy/blob.png')
+			instruction = pygame.transform.scale(instruction, teach_box_size)
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
 		
-		blob_group.draw(screen)
-		trap_group.draw(screen)
-		for coin in coin_group:
-			coin.draw(offset_x)
-		exit_group.draw(screen)
-  
-		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
-				(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
-			# print("scroll should kick in")
-			offset_x += player.vel_x * 10
-  
-		# Lose condition met
-		if game_over == -1:
-			if restart_button.draw():
-				world_data = []
-				world = reset_level(level)
-				game_over = 0
+		if stoned == True:
+			player.telekinesis()
+		else:
+			game_over = player.update(game_over, offset_x)
 
-		# Level advance condition met  
-		if game_over == 1:
-			#reset game and go to next level
-			level += 1
-			if level <= max_levels:
+	if game_over == 0:
+		blob_group.update()
+		#check if a coin has been collected
+		if pygame.sprite.spritecollide(player, coin_group, True):
+			score += 1
+			coin_fx.play()
+			stoned = True 
+			
+		# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
+	
+	blob_group.draw(screen)
+	for dark_nugget in dark_nugget_group:
+		dark_nugget.draw(offset_x)
+	for coin in coin_group:
+		coin.draw(offset_x)
+	exit_group.draw(screen)
+
+	if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
+			(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
+		offset_x += player.vel_x * 10
+
+	# Lose condition met
+	if game_over == -1:
+		if restart_button.draw():
+			world_data = []
+			world = reset_level(level)
+			game_over = 0
+
+	# Level advance condition met  
+	if game_over == 1:
+		#reset game and go to next level
+		level += 1
+		if level <= max_levels:
+			#reset level
+			world_data = []
+			world = reset_level(level)
+			game_over = 0
+		else:
+			draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
+			if restart_button.draw():
+				level = 1
 				#reset level
 				world_data = []
 				world = reset_level(level)
 				game_over = 0
-			else:
-				draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
-				if restart_button.draw():
-					level = 1
-					#reset level
-					world_data = []
-					world = reset_level(level)
-					game_over = 0
 
 	
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			run = False 
-		if event.type == pygame.KEYDOWN:
+		if event.type == pygame.KEYDOWN:	
 			if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
 				instruction_lr_viewed = True 
 			if event.key == pygame.K_SPACE:
 				instructuin_jump_viewed = True 
+			if stoned and event.key == pygame.K_q:
+				stoned = False 
 			
 	pygame.display.update() 
 			
