@@ -471,6 +471,9 @@ dark_nugget_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()  
 
+# Dev functions
+text = "" 
+
 stoned = False 
 
 # Beginning sequence
@@ -599,6 +602,20 @@ while run:
 				instructuin_jump_viewed = True 
 			if stoned and event.key == pygame.K_q:
 				stoned = False 
+			# @zkzh super hacky shit for dev 
+			if event.key == pygame.K_BACKSPACE:
+				text =  text[:-1]
+			elif event.key == pygame.K_p:
+				print("text: ", text)
+			elif event.key == pygame.K_h:
+				coords = text.split(",")
+				print("lol!", coords[0], coords[1])
+				player.rect.x = int(coords[0])
+				player.rect.y = int(coords[1])
+				game_over = player.update(game_over, offset_x, offset_y)
+				text = ""
+			else:
+				text += event.unicode
 			
 	pygame.display.update() 
 			
