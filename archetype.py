@@ -18,6 +18,7 @@ final_map_height = 2000
 final_map_width = 2800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
+# @zkzh to change later
 pygame.display.set_caption('Untitled Gem Platformer')
 
 # Define font
@@ -396,12 +397,6 @@ class Player():
 				if pygame.sprite.spritecollide(self, blob_group, False):
 					game_over = -1
 					game_over_fx.play()
-
-				# @zkzh this part is now effectively changed; implement drag behavior
-				# #check for collision with trap
-				# if pygame.sprite.spritecollide(self, trap_group, False):
-				# 	game_over = -1
-				# 	game_over_fx.play()
 	 
 				#check for collision with exit
 				if pygame.sprite.spritecollide(self, exit_group, False):
@@ -513,7 +508,7 @@ while run:
 		start_sliding_speed, sliding_ended = player.slide(start_sliding_speed)
 	else:
 		if not instruction_lr_viewed:
-			instruction = pygame.image.load('assets/img/Player/ghost.png')
+			instruction = pygame.image.load('assets/img/Tutorial/left_right.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x, player.rect.y-200))
 		elif not instructuin_jump_viewed and player.rect.x >= 840:
@@ -524,7 +519,7 @@ while run:
 			instruction = pygame.image.load('assets/img/Enemy/blob.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
-		
+		# @zkzh still need tutorials for change & blue shenanigans; esp. the clicky ones
 		if stoned == True:
 			player.telekinesis()
 		else:
