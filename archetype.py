@@ -50,8 +50,9 @@ exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
 
 # Load audio assets
 pygame.mixer.music.load('assets/aud/music.wav')
+# @zkzh add some, if not all gathered new SFXs
 # pygame.mixer.music.play(-1, 0.0, 5000) # disabled for now; annoying af
-coin_fx = pygame.mixer.Sound('assets/aud/coin.wav')
+coin_fx = pygame.mixer.Sound('assets/aud/blue_nugget.wav')
 coin_fx.set_volume(0.5)
 jump_fx = pygame.mixer.Sound('assets/aud/jump.wav')
 jump_fx.set_volume(0.5)
@@ -230,7 +231,7 @@ class Player():
 	def telekinesis(self):
 		piece = pygame.image.load(f'assets/img/Player/stein_red_1.png')
 		self.image = pygame.transform.scale(piece, (80, 80))
-		screen.blit(self.image, (self.rect.x, self.rect.y))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
 		for nugget in dark_nugget_group:
 			nugget.drag()
   
@@ -392,15 +393,27 @@ class Player():
 					# 	print("landed...")
 					self.jump_count = 0 
 					
-		
-				#check for collision with enemies
-				if pygame.sprite.spritecollide(self, blob_group, False):
-					game_over = -1
-					game_over_fx.play()
-	 
-				#check for collision with exit
-				if pygame.sprite.spritecollide(self, exit_group, False):
-					game_over = 1
+			for dark_nugget in dark_nugget_group:
+				#check for collision in x direction
+				nugget_rect = dark_nugget.rect
+				if nugget_rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+					dx = 0
+				#check for collision in y direction
+				if nugget_rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+					#check if below the ground i.e. jumping
+					if self.vel_y < 0:
+						dy = nugget_rect.bottom - self.rect.top
+						self.vel_y = 0
+					#check if above the ground i.e. falling
+					elif self.vel_y >= 0:
+						dy = nugget_rect.top - self.rect.bottom
+						self.vel_y = 0
+						self.in_air = False
+					# if self.jump_count > 0:
+					# 	print("landed...")
+					self.jump_count = 0 
+
+
 
 			#update player coordinates
 			self.rect.x += dx
