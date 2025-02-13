@@ -123,6 +123,7 @@ class World():
 		grass_img = pygame.image.load('assets/img/Terrain/grass.png')
 
 		row_count = 0
+		blue_id = 1
 		for row in data:
 			col_count = 0
 			for tile in row:
@@ -141,8 +142,9 @@ class World():
 					tile = (img, img_rect)
 					self.tile_list.append(tile)
 				if tile == 3:
-					blob = Enemy(col_count * tile_size, row_count * tile_size + 15)
-					blob_group.add(blob)        
+					blob = BlueNPC(blue_id, col_count * tile_size, row_count * tile_size)
+					blob_group.add(blob)
+					blue_id += 1
 				if tile == 6:
 					dark_nugget = DarkNugget(col_count * tile_size, row_count * tile_size + (tile_size // 2))
 					dark_nugget_group.add(dark_nugget)
@@ -159,22 +161,118 @@ class World():
 		for tile in self.tile_list:
 			screen.blit(tile[0], (tile[1].x - offset_x, tile[1].y - offset_y))
 
-class Enemy(pygame.sprite.Sprite):
-	def __init__(self, x, y):
+class BlueNPC(pygame.sprite.Sprite):
+	def __init__(self, i, x, y):
 		pygame.sprite.Sprite.__init__(self)
-		self.image = pygame.image.load('assets/img/Enemy/blob.png')
-		self.rect = self.image.get_rect()
+		# blue_sprite = pygame.image.load('assets/img/Enemy/blob.png')
+		self.body_sprite = pygame.image.load(f'assets/img/NPC/normal_body_{i}.png')
+		self.eyes_sprite = pygame.image.load(f'assets/img/NPC/normal_eyes_{i}.png')
+
+		self.hidden_body_sprite = pygame.image.load(f'assets/img/NPC/normal_body_{i}_hidden.png')
+		self.hidden_eyes_sprite = pygame.image.load(f'assets/img/NPC/normal_eyes_{i}_hidden.png')
+
+		self.x_scale, self.y_scale = 2, 5
+		self.hidden = False 
+		self.cropped_height = 10 # @zkzh change this based on drawn assets
+		self.body_image, self.eyes_image = self.use_normal_sprites() 
+
+		self.rect = self.body_image.get_rect()		
+		self.rect.y = y - (self.scaled_body_height - tile_size) # make sure bottom is on floor
 		self.rect.x = x
-		self.rect.y = y
+  
+		self.hide_offset = 0 
+  
+		self.eye_gaze_offset_x, self.eye_gaze_offset_y = 0, 0
 		self.move_direction = 1
 		self.move_counter = 0
+  
+	def use_normal_sprites(self):
+		self.scaled_body_width, self.scaled_body_height = self.body_sprite.get_width() * self.x_scale, self.body_sprite.get_height() * self.y_scale
+		body_image = pygame.transform.scale(
+			self.body_sprite, 
+			(
+				self.scaled_body_width,
+				self.scaled_body_height
+			)
+		)
+		scaled_eyes_width, scaled_eyes_height = self.eyes_sprite.get_width() * self.x_scale, self.eyes_sprite.get_height() * self.y_scale
+		eyes_image = pygame.transform.scale(
+			self.eyes_sprite, 
+			(
+				scaled_eyes_width,
+				scaled_eyes_height
+			)
+		)
+  
+		return body_image, eyes_image
+  
+	def use_hidden_sprites(self):
+		self.scaled_body_width, self.scaled_body_height = self.hidden_body_sprite.get_width() * self.x_scale, self.hidden_body_sprite.get_height() * self.y_scale
+		body_image = pygame.transform.scale(
+			self.hidden_body_sprite, 
+			(
+				self.scaled_body_width,
+				self.scaled_body_height
+			)
+		)
+		scaled_eyes_width, scaled_eyes_height = self.hidden_eyes_sprite.get_width() * self.x_scale, self.hidden_eyes_sprite.get_height() * self.y_scale
+		eyes_image = pygame.transform.scale(
+			self.hidden_eyes_sprite, 
+			(
+				scaled_eyes_width,
+				scaled_eyes_height 
+			)
+		)
 
+		return body_image, eyes_image
+
+	def draw(self, offset_x, offset_y): 
+		if self.hidden:
+			self.body_image, self.eyes_image = self.use_hidden_sprites()
+			
+			screen.blit(self.body_image, (self.rect.x - offset_x, self.rect.y - offset_y + self.cropped_height * self.y_scale))
+			screen.blit(
+				self.eyes_image, 
+				(
+					self.rect.x - offset_x + self.eye_gaze_offset_x, 
+					self.rect.y - offset_y + self.eye_gaze_offset_y + self.cropped_height * self.y_scale
+				)
+			)
+		else:
+			self.body_image, self.eyes_image = self.use_normal_sprites()
+			
+			screen.blit(self.body_image, (self.rect.x - offset_x, self.rect.y - offset_y))
+			screen.blit(
+				self.eyes_image, 
+				(
+					self.rect.x - offset_x + self.eye_gaze_offset_x, 
+					self.rect.y - offset_y + self.eye_gaze_offset_y
+				)
+			)
+  
 	def update(self):
-		self.rect.x += self.move_direction
-		self.move_counter += 1
-		if abs(self.move_counter) > 50:
-			self.move_direction *= -1
-			self.move_counter *= -1
+		player_proximity_x = player.rect.x - self.rect.x
+		player_proximity_y = player.rect.y - self.rect.y
+  
+		self.eye_gaze_offset_x = player_proximity_x * .02
+		self.eye_gaze_offset_y = player_proximity_y * .02
+		hide_threshold_x, hide_threshold_y = 200, 100
+		if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
+			self.hidden = True
+			
+			# @zkzh fancy this hide/unhide animation is tricky; screw it we use still image 
+		elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
+			self.hidden = False 
+				# self.body_image, self.eyes_image = self.use_normal_sprites()
+			# self.body_image, self.eyes_image = self.use_normal_sprites()
+				# self.hide_offset = 0
+				# while self.hide_offset < self.scaled_body_height:
+				# 	self.hide_offset += .05
+				# 	self.draw(0, self.hide_offset)
+				# self.hide_offset = 0 
+				# self.rect.y -= self.scaled_body_height
+
+
 
 class DarkNugget(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -551,7 +649,8 @@ while run:
 			
 		# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
 	
-	blob_group.draw(screen)
+	for npc in blob_group:
+		npc.draw(offset_x, offset_y)
 	for dark_nugget in dark_nugget_group:
 		dark_nugget.draw(offset_x, offset_y)
 	for coin in coin_group:
@@ -602,7 +701,7 @@ while run:
 				instructuin_jump_viewed = True 
 			if stoned and event.key == pygame.K_q:
 				stoned = False 
-			# @zkzh super hacky shit for dev 
+			# @zkzh super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
 			elif event.key == pygame.K_p:
