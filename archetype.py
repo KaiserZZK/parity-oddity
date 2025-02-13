@@ -155,9 +155,9 @@ class World():
 				col_count += 1
 			row_count += 1
 
-	def draw(self, offset_x):
+	def draw(self, offset_x, offset_y):
 		for tile in self.tile_list:
-			screen.blit(tile[0], (tile[1].x - offset_x, tile[1].y))
+			screen.blit(tile[0], (tile[1].x - offset_x, tile[1].y - offset_y))
 
 class Enemy(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -186,8 +186,8 @@ class DarkNugget(pygame.sprite.Sprite):
 		self.rect.y = y
 		self.dragging = False  # Flag to track if dragging
 	
-	def draw(self, offset_x):
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+	def draw(self, offset_x, offset_y):
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
   
 	def drag(self):
 		pos = pygame.mouse.get_pos()
@@ -211,8 +211,8 @@ class Coin(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
   
-	def draw(self, offset_x):
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+	def draw(self, offset_x, offset_y):
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		
   
 class Exit(pygame.sprite.Sprite):
@@ -231,7 +231,7 @@ class Player():
 	def telekinesis(self):
 		piece = pygame.image.load(f'assets/img/Player/stein_red_1.png')
 		self.image = pygame.transform.scale(piece, (80, 80))
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		for nugget in dark_nugget_group:
 			nugget.drag()
   
@@ -240,7 +240,7 @@ class Player():
 		scaled = pygame.transform.scale(piece, (80, 80))
 		self.image = pygame.transform.rotate(scaled, curr_rot)
   
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		self.rect.x += vy
 		self.rect.y -= (vy - 0.2)
 		return vy, curr_rot + 5
@@ -249,7 +249,7 @@ class Player():
 	def slide(self, speed):
 		initial_sqr = pygame.image.load(f'assets/img/Player/oomfie.png')
 		self.image = pygame.transform.scale(initial_sqr, (80, 80))
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		friction = 0.95
 		speed *= friction
 		while self.rect.x < 422:
@@ -288,11 +288,11 @@ class Player():
 		self.rect.y += dy
 
 		#draw player onto screen
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		return (False, fall_speed)
 
 
-	def update(self, game_over, offset_x):
+	def update(self, game_over, offset_x, offset_y):
 		dx = 0
 		dy = 0
 		walk_cooldown = 5
@@ -426,7 +426,7 @@ class Player():
 				self.rect.y -= 5
 
 		#draw player onto screen
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
   
 		return game_over 
 
@@ -497,8 +497,8 @@ if path.exists(f'level{level}_data'):
 
 world = World(world_data)
 
-offset_x = 0 
-scroll_area_width = 200
+offset_x, offset_y = 0, 0 
+scroll_area_width, scroll_area_height = 200, 160
 
 run = True 
 
@@ -512,7 +512,7 @@ while run:
 		for x in range(0, screen_width, bg_tile_width): 
 			screen.blit(bg_img, (x, y))
 	
-	world.draw(offset_x)
+	world.draw(offset_x, offset_y)
 
 	if not landed: 
 		landed, fall_speed = sqr.crash_land(fall_speed)
@@ -527,16 +527,16 @@ while run:
 		elif not instructuin_jump_viewed and player.rect.x >= 840:
 			instruction = pygame.image.load('assets/img/Enemy/trap.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
-			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
 		elif not glide_ever_used and player.rect.x >= 1160:
 			instruction = pygame.image.load('assets/img/Enemy/blob.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
-			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y-200))
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
 		# @zkzh still need tutorials for change & blue shenanigans; esp. the clicky ones
 		if stoned == True:
 			player.telekinesis()
 		else:
-			game_over = player.update(game_over, offset_x)
+			game_over = player.update(game_over, offset_x, offset_y)
 
 	if game_over == 0:
 		blob_group.update()
@@ -550,14 +550,18 @@ while run:
 	
 	blob_group.draw(screen)
 	for dark_nugget in dark_nugget_group:
-		dark_nugget.draw(offset_x)
+		dark_nugget.draw(offset_x, offset_y)
 	for coin in coin_group:
-		coin.draw(offset_x)
+		coin.draw(offset_x, offset_y)
 	exit_group.draw(screen)
 
 	if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
 			(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
 		offset_x += player.vel_x * 10
+
+	if ((player.rect.top - offset_y >= screen_height - scroll_area_height) and player.vel_y > 0) or (
+			(player.rect.bottom - offset_y <= scroll_area_height) and player.vel_y < 0):
+		offset_y += player.vel_y * 2
 
 	# Lose condition met
 	if game_over == -1:
