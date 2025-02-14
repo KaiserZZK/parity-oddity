@@ -180,7 +180,7 @@ def shrink_world_data(world_data, lx, rx, ly, ry):
 
 scale_factor = 1.0
 offset_x, offset_y = 0, 0
-offset_delta = 20
+offset_delta = 400
 
 previous_loaded = False
 
@@ -197,7 +197,7 @@ while run:
 			bg_img = pygame.transform.scale(bg_img, (bg_tile_width * scale_factor, bg_tile_height * scale_factor))
 			screen.blit(bg_img, (x * scale_factor + offset_x, y * scale_factor + offset_y))
 
-	#load and save level
+	# load and save level (legacy: with buttons)
 	# if save_button.draw():
 	# 	#save level data
 	# 	pickle_out = open(f'level{level}_data', 'wb')
@@ -234,7 +234,7 @@ while run:
 			clicked = True 
 			pos = pygame.mouse.get_pos()
 			x = int((pos[0] - offset_x) // (tile_size * scale_factor)) 
-			y = int((pos[1] + offset_y) // (tile_size * scale_factor)) 
+			y = int((pos[1] - offset_y) // (tile_size * scale_factor)) 
 			#check that the coordinates are within the tile area
 			if x < (map_width//tile_size) and y < (map_height//tile_size):
 				#update tile value

@@ -19,7 +19,7 @@ final_map_width = 2800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 # @zkzh to change later
-pygame.display.set_caption('Untitled Gem Platformer')
+pygame.display.set_caption('[ ] % 2 == 0 ?')
 
 # Define font
 font = pygame.font.SysFont('Bauhaus 93', 70)
@@ -588,8 +588,10 @@ instruction_lr_viewed = False
 instructuin_jump_viewed = False 
 
 # Kid
+# @zkzh not finalized yet 
 kid_spawn_points = [
-	(1448,398)
+	(2040, 400), # 1st level test; following from your left
+	(1530, 900)  # 2nd level test; following from you right
 ]
 
 #load in level data and create world
