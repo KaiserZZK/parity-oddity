@@ -283,6 +283,7 @@ class Kid(pygame.sprite.Sprite):
 		self.hidden_eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes_hidden.png')
   
 		self.spawn_x = x
+		self.follow_from_left = follow_from_left
 
 		self.x_scale, self.y_scale = 2, 5
 		self.hidden = False 
@@ -363,6 +364,13 @@ class Kid(pygame.sprite.Sprite):
 					self.rect.y - offset_y + self.eye_gaze_offset_y
 				)
 			)
+   
+	def walked_past(self, x):
+		if self.follow_from_left: 
+			# @zkzh change value as needed
+			return (x - self.rect.x) >= 100
+		else:
+			return (self.rect.x - x) <= 100
   
 	def update(self):
 		player_proximity_x = player.rect.x - self.rect.x
@@ -708,6 +716,7 @@ kid_spawn_points = [
 	(1530, 900, False)  # 2nd level test; following from you right
 ]
 kid_spawn_threshold = 100
+current_clone = None 
 
 #load in level data and create world
 if path.exists(f'level{level}_data'):
@@ -770,10 +779,14 @@ while run:
   
 	if len(kid_spawn_points) > 0:
 		x, y, follow_from_left = kid_spawn_points[0]
+		if current_clone is not None:
+			if current_clone.walked_past(player.rect.x):
+				current_clone = None			
 		if (follow_from_left and (player.rect.x - x) >= kid_spawn_threshold) or ((follow_from_left==False) and (x - player.rect.x) >= kid_spawn_threshold):
-			kx, ky, f = kid_spawn_points.pop()
-			kid_clones.add(Kid(kx, ky, f))
-			# @zkzh should show up only after the previous one is out of range
+			if current_clone == None:
+				kx, ky, f = kid_spawn_points.pop(0)
+				current_clone = Kid(kx, ky, f)
+				kid_clones.add(current_clone)
 	
 	for npc in blob_group:
 		npc.draw(offset_x, offset_y)
