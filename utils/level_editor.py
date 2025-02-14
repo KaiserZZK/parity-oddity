@@ -216,9 +216,10 @@ while run:
 	draw_world(map_height=map_height, map_width=map_width, scale_factor=scale_factor, dx=offset_x, dy=offset_y)
 
 
-	#text showing current level
 	pos = pygame.mouse.get_pos()
-	draw_text(f'Mousing {pos[0]/scale_factor-offset_x, pos[1]/scale_factor-offset_y}', font, white, tile_size, screen_height - 100)
+	#text showing current level
+	# @zkzh check this one
+	draw_text(f'Mousing {(pos[0]-offset_x)/scale_factor, (pos[1]+offset_y)/scale_factor}', font, white, tile_size, screen_height - 100)
 	draw_text(f'Current modification data input {text}', font, white, tile_size, screen_height - 80)
 	draw_text(f'Height {map_height} Width {map_width} tile size {tile_size}', font, white, tile_size, screen_height - 60)
 	draw_text('{level} Press UP or DOWN to change level', font, white, tile_size, screen_height - 40)

@@ -572,7 +572,7 @@ exit_group = pygame.sprite.Group()
 # Dev functions
 text = "" 
 
-stoned = False 
+frozen = False 
 
 # Beginning sequence
 landed = False 
@@ -587,9 +587,10 @@ teach_box_size = (300, 200)
 instruction_lr_viewed = False 
 instructuin_jump_viewed = False 
 
-#create dummy coin for showing the score
-# score_coin = Coin(tile_size // 2, tile_size // 2)
-# coin_group.add(score_coin)
+# Kid
+kid_spawn_points = [
+	(1448,398)
+]
 
 #load in level data and create world
 if path.exists(f'level{level}_data'):
@@ -634,7 +635,7 @@ while run:
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
 		# @zkzh still need tutorials for change & blue shenanigans; esp. the clicky ones
-		if stoned == True:
+		if frozen == True:
 			player.telekinesis()
 		else:
 			game_over = player.update(game_over, offset_x, offset_y)
@@ -645,7 +646,7 @@ while run:
 		if pygame.sprite.spritecollide(player, coin_group, True):
 			score += 1
 			coin_fx.play()
-			stoned = True 
+			frozen = True 
 			
 		# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
 	
@@ -699,8 +700,8 @@ while run:
 				instruction_lr_viewed = True 
 			if event.key == pygame.K_SPACE:
 				instructuin_jump_viewed = True 
-			if stoned and event.key == pygame.K_q:
-				stoned = False 
+			if frozen and event.key == pygame.K_q:
+				frozen = False 
 			# @zkzh super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
