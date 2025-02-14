@@ -406,13 +406,13 @@ class DarkNugget(pygame.sprite.Sprite):
 		pos = pygame.mouse.get_pos()
 		mouse_pressed = pygame.mouse.get_pressed()[0]  # Left mouse button
 
-		if self.rect.collidepoint(pos):  # Check if mouse is over object
+		if self.rect.collidepoint((pos[0]+offset_x, pos[1]+offset_y)):  # Check if mouse is over object
 			if mouse_pressed and not self.dragging:
 				self.dragging = True  # Start dragging
 		
 		if self.dragging:
 			if mouse_pressed:
-				self.rect.x, self.rect.y = pos[0], pos[1]  # Update position
+				self.rect.x, self.rect.y = pos[0]+offset_x, pos[1]+offset_y  # Update position
 			else:
 				self.dragging = False  # Stop dragging when mouse released
   
@@ -725,10 +725,10 @@ scroll_area_width, scroll_area_height = 200, 160
 run = True 
 
 while run:
+    # @zkzh for debugging; remove this later 
+	print("current_pos", player.rect.x, player.rect.y)
 	
 	clock.tick(fps)
- 
-	# print(player.rect.x, player.rect.y)
 	
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
