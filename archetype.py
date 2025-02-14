@@ -135,12 +135,7 @@ class World():
 					tile = (img, img_rect)
 					self.tile_list.append(tile)
 				if tile == 2:
-					img = pygame.transform.scale(grass_img, (tile_size, tile_size))
-					img_rect = img.get_rect()
-					img_rect.x = col_count * tile_size
-					img_rect.y = row_count * tile_size
-					tile = (img, img_rect)
-					self.tile_list.append(tile)
+					kid_spawn_points.append([col_count * tile_size, row_count * tile_size, True])
 				if tile == 3:
 					blob = BlueNPC(blue_id, col_count * tile_size, row_count * tile_size)
 					blob_group.add(blob)
@@ -152,8 +147,7 @@ class World():
 					coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
 					coin_group.add(coin)
 				if tile == 8:
-					exit = Exit(col_count * tile_size, row_count * tile_size - (tile_size // 2))
-					exit_group.add(exit)
+					kid_spawn_points.append([col_count * tile_size, row_count * tile_size, False])
 				col_count += 1
 			row_count += 1
 
@@ -712,8 +706,8 @@ instructuin_jump_viewed = False
 # Kid
 # @zkzh not finalized yet 
 kid_spawn_points = [
-	(2040, 400, True), # 1st level test; following from your left
-	(1530, 900, False)  # 2nd level test; following from you right
+	# (2040, 400, True), # 1st level test; following from your left
+	# (1530, 900, False)  # 2nd level test; following from you right
 ]
 kid_spawn_threshold = 100
 current_clone = None 

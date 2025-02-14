@@ -75,7 +75,7 @@ def draw_world(map_height, map_width, scale_factor, dx, dy):
 					img = pygame.transform.scale(dirt_imgs[i-1], (tile_size * scale_factor, tile_size * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
 				if world_data[row][col] == 2:
-					#grass blocks
+					#grass blocks (left-following kids)
 					img = pygame.transform.scale(grass_img, (tile_size * scale_factor, tile_size * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
 				if world_data[row][col] == 3:
@@ -100,7 +100,7 @@ def draw_world(map_height, map_width, scale_factor, dx, dy):
 					img = pygame.transform.scale(coin_img, ((tile_size // 2) * scale_factor, (tile_size // 2) * scale_factor))
 					screen.blit(img, ((col * tile_size + (tile_size // 4)) * scale_factor + dx, (row * tile_size + (tile_size // 4)) * scale_factor + dy))
 				if world_data[row][col] == 8:
-					#exit
+					#exit (right-following kids)
 					img = pygame.transform.scale(exit_img, (tile_size * scale_factor, int(tile_size * 1.5) * scale_factor))
 					screen.blit(img, ((col * tile_size) * scale_factor + dx, (row * tile_size - (tile_size // 2)) * scale_factor + dy))
 
