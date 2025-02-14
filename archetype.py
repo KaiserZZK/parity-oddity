@@ -18,8 +18,7 @@ final_map_height = 2000
 final_map_width = 2800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
-# @zkzh to change later
-pygame.display.set_caption('[ ] % 2 == 0 ?')
+pygame.display.set_caption('%')
 
 # Define font
 font = pygame.font.SysFont('Bauhaus 93', 70)
@@ -62,6 +61,12 @@ game_over_fx.set_volume(0.5)
 # Some global vars that track more complex player actions; for instructions display 
 global glide_ever_used
 glide_ever_used = False 
+global ever_changed
+ever_changed = False 
+global ever_detransformed
+ever_detransformed = False 
+change_1_viewed = False 
+change_2_viewed = False 
 
 def draw_text(text, font, text_col, x, y):
 	img = font.render(text, True, text_col)
@@ -167,7 +172,7 @@ class BlueNPC(pygame.sprite.Sprite):
 
 		self.x_scale, self.y_scale = 2, 5
 		self.hidden = False 
-		self.cropped_height = 10 # @zkzh change this based on drawn assets
+		self.cropped_height = 10 # @zkzh change this based on drawn NPC assets
 		self.body_image, self.eyes_image = self.use_normal_sprites() 
 
 		self.rect = self.body_image.get_rect()		
@@ -442,7 +447,9 @@ class Player():
 		self.reset(x, y) 
   
 	def telekinesis(self):
-		piece = pygame.image.load(f'assets/img/Player/stein_red_1.png')
+		global ever_changed
+		ever_changed = True 
+		piece = pygame.image.load(f'assets/img/Player/frozen.png')
 		self.image = pygame.transform.scale(piece, (80, 80))
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		for nugget in dark_nugget_group:
@@ -702,13 +709,10 @@ fly_spin = 0
 teach_box_size = (300, 200)
 instruction_lr_viewed = False 
 instructuin_jump_viewed = False 
+progressive_boxes_position = ()
 
 # Kid
-# @zkzh not finalized yet 
-kid_spawn_points = [
-	# (2040, 400, True), # 1st level test; following from your left
-	# (1530, 900, False)  # 2nd level test; following from you right
-]
+kid_spawn_points = []
 kid_spawn_threshold = 100
 current_clone = None 
 
@@ -725,8 +729,8 @@ scroll_area_width, scroll_area_height = 200, 160
 run = True 
 
 while run:
-    # @zkzh for debugging; remove this later 
-	print("current_pos", player.rect.x, player.rect.y)
+	# @zkzh REMOVE
+	# print("Debugging: current positions at", player.rect.x, player.rect.y)
 	
 	clock.tick(fps)
 	
@@ -747,14 +751,26 @@ while run:
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x, player.rect.y-200))
 		elif not instructuin_jump_viewed and player.rect.x >= 840:
-			instruction = pygame.image.load('assets/img/Enemy/trap.png')
+			instruction = pygame.image.load('assets/img/Tutorial/jump.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
 		elif not glide_ever_used and player.rect.x >= 1160:
-			instruction = pygame.image.load('assets/img/Enemy/blob.png')
+			instruction = pygame.image.load('assets/img/Tutorial/gliding.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
-		# @zkzh still need tutorials for change & blue shenanigans; esp. the clicky ones
+		elif not ever_changed and player.rect.x >= 2112:
+			instruction = pygame.image.load('assets/img/Tutorial/changing.png')
+			instruction = pygame.transform.scale(instruction, teach_box_size)
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
+		elif frozen and (not ever_detransformed): 
+			if (not change_1_viewed) and (not change_2_viewed):
+				instruction = pygame.image.load('assets/img/Tutorial/changed_1.png')
+			elif (not change_2_viewed):
+				instruction = pygame.image.load('assets/img/Tutorial/changed_2.png')
+			else:
+				instruction = pygame.image.load('assets/img/Tutorial/changed_3.png')
+			instruction = pygame.transform.scale(instruction, teach_box_size)
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))			
 		if frozen == True:
 			player.telekinesis()
 		else:
@@ -836,20 +852,29 @@ while run:
 				instructuin_jump_viewed = True 
 			if frozen and event.key == pygame.K_q:
 				frozen = False 
-			# @zkzh super hacky shit for dev  
+				ever_detransformed = True 
+			# @zkzh REMOVE super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
 			elif event.key == pygame.K_p:
-				print("text: ", text)
+				print("coords you're about to get teleported to: ", text)
 			elif event.key == pygame.K_h:
 				coords = text.split(",")
-				print("lol!", coords[0], coords[1])
+				print("whoooosh--you're about to go to ", coords[0], coords[1])
 				player.rect.x = int(coords[0])
 				player.rect.y = int(coords[1])
 				game_over = player.update(game_over, offset_x, offset_y)
 				text = ""
 			else:
 				text += event.unicode
+		elif event.type == pygame.MOUSEBUTTONDOWN:
+			mouse_x, mouse_y = event.pos  # Get mouse position
+			# Check if click is inside the rectangle
+			if 517 <= mouse_x <= 517+teach_box_size[0]*2 and 90 <= mouse_y <= 90+teach_box_size[1]*2:
+				if not change_1_viewed:
+					change_1_viewed = True  
+				elif not change_2_viewed:
+					change_2_viewed = True 
 			
 	pygame.display.update() 
 			
