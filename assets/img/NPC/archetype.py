@@ -272,119 +272,6 @@ class BlueNPC(pygame.sprite.Sprite):
 				# self.hide_offset = 0 
 				# self.rect.y -= self.scaled_body_height
 
-class Kid(pygame.sprite.Sprite):
-	def __init__(self, x, y, follow_from_left):
-		pygame.sprite.Sprite.__init__(self)
-		# blue_sprite = pygame.image.load('assets/img/Enemy/blob.png')
-		self.body_sprite = pygame.image.load(f'assets/img/NPC/kid_body.png')
-		self.eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes.png')
-
-		self.hidden_body_sprite = pygame.image.load(f'assets/img/NPC/kid_body_hidden.png')
-		self.hidden_eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes_hidden.png')
-  
-		self.spawn_x = x
-
-		self.x_scale, self.y_scale = 2, 5
-		self.hidden = False 
-		self.follow_offset = 100 
-		self.cropped_height = 10 # @zkzh change this based on drawn assets
-		self.body_image, self.eyes_image = self.use_normal_sprites() 
-
-		self.rect = self.body_image.get_rect()		
-		self.rect.y = y - (self.scaled_body_height - tile_size) # make sure bottom is on floor
-		self.rect.x = x
-  
-		self.hide_offset = 0 
-  
-		self.eye_gaze_offset_x, self.eye_gaze_offset_y = 0, 0
-		self.move_direction = 1
-		self.move_counter = 0
-  
-	def use_normal_sprites(self):
-		self.scaled_body_width, self.scaled_body_height = self.body_sprite.get_width() * self.x_scale, self.body_sprite.get_height() * self.y_scale
-		body_image = pygame.transform.scale(
-			self.body_sprite, 
-			(
-				self.scaled_body_width,
-				self.scaled_body_height
-			)
-		)
-		scaled_eyes_width, scaled_eyes_height = self.eyes_sprite.get_width() * self.x_scale, self.eyes_sprite.get_height() * self.y_scale
-		eyes_image = pygame.transform.scale(
-			self.eyes_sprite, 
-			(
-				scaled_eyes_width,
-				scaled_eyes_height
-			)
-		)
-  
-		return body_image, eyes_image
-  
-	def use_hidden_sprites(self):
-		self.scaled_body_width, self.scaled_body_height = self.hidden_body_sprite.get_width() * self.x_scale, self.hidden_body_sprite.get_height() * self.y_scale
-		body_image = pygame.transform.scale(
-			self.hidden_body_sprite, 
-			(
-				self.scaled_body_width,
-				self.scaled_body_height
-			)
-		)
-		scaled_eyes_width, scaled_eyes_height = self.hidden_eyes_sprite.get_width() * self.x_scale, self.hidden_eyes_sprite.get_height() * self.y_scale
-		eyes_image = pygame.transform.scale(
-			self.hidden_eyes_sprite, 
-			(
-				scaled_eyes_width,
-				scaled_eyes_height 
-			)
-		)
-
-		return body_image, eyes_image
-
-	def draw(self, offset_x, offset_y): 
-		if self.hidden:
-			self.body_image, self.eyes_image = self.use_hidden_sprites()
-			
-			screen.blit(self.body_image, (self.rect.x - offset_x, self.rect.y - offset_y + self.cropped_height * self.y_scale))
-			screen.blit(
-				self.eyes_image, 
-				(
-					self.rect.x - offset_x + self.eye_gaze_offset_x, 
-					self.rect.y - offset_y + self.eye_gaze_offset_y + self.cropped_height * self.y_scale
-				)
-			)
-		else:
-			self.body_image, self.eyes_image = self.use_normal_sprites()
-			
-			screen.blit(self.body_image, (self.rect.x - offset_x, self.rect.y - offset_y))
-			screen.blit(
-				self.eyes_image, 
-				(
-					self.rect.x - offset_x + self.eye_gaze_offset_x, 
-					self.rect.y - offset_y + self.eye_gaze_offset_y
-				)
-			)
-  
-	def update(self):
-		player_proximity_x = player.rect.x - self.rect.x
-		player_proximity_y = player.rect.y - self.rect.y
-  
-		self.eye_gaze_offset_x = player_proximity_x * .02
-		self.eye_gaze_offset_y = player_proximity_y * .02
-		hide_threshold_x, hide_threshold_y = 200, 100
-		if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
-			self.hidden = True
-			
-			# @zkzh fancy this hide/unhide animation is tricky; screw it we use still image 
-		elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
-			self.hidden = False 
-				# self.body_image, self.eyes_image = self.use_normal_sprites()
-			# self.body_image, self.eyes_image = self.use_normal_sprites()
-				# self.hide_offset = 0
-				# while self.hide_offset < self.scaled_body_height:
-				# 	self.hide_offset += .05
-				# 	self.draw(0, self.hide_offset)
-				# self.hide_offset = 0 
-				# self.rect.y -= self.scaled_body_height
 
 
 class DarkNugget(pygame.sprite.Sprite):
@@ -704,10 +591,11 @@ instructuin_jump_viewed = False
 # Kid
 # @zkzh not finalized yet 
 kid_spawn_points = [
-	(2040, 400, True), # 1st level test; following from your left
-	(1530, 900, False)  # 2nd level test; following from you right
+	(2040, 400), # 1st level test; following from your left
+	(1530, 900)  # 2nd level test; following from you right
 ]
-kid_spawn_threshold = 100
+for x, y, follow_from_left in kid_spawn_points:
+    kid_clones.add(Kid(x, y, follow_from_left))
 
 #load in level data and create world
 if path.exists(f'level{level}_data'):
@@ -767,13 +655,6 @@ while run:
 			frozen = True 
 			
 		# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
-  
-	if len(kid_spawn_points) > 0:
-		x, y, follow_from_left = kid_spawn_points[0]
-		if (follow_from_left and (player.rect.x - x) >= kid_spawn_threshold) or ((follow_from_left==False) and (x - player.rect.x) >= kid_spawn_threshold):
-			kx, ky, f = kid_spawn_points.pop()
-			kid_clones.add(Kid(kx, ky, f))
-			# @zkzh should show up only after the previous one is out of range
 	
 	for npc in blob_group:
 		npc.draw(offset_x, offset_y)
