@@ -46,6 +46,9 @@ bg_tile_width = bg_img.get_width()
 restart_img = pygame.image.load('assets/img/Button/restart_btn.png')
 start_img = pygame.image.load('assets/img/Button/start_btn.png')
 exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
+village_entrance_img = pygame.image.load('assets/img/NPC/entrance.png')
+village_entrance_img = pygame.transform.scale(village_entrance_img, (tile_size*3, tile_size*3))
+
 
 # Load audio assets
 pygame.mixer.music.load('assets/aud/music.wav')
@@ -170,9 +173,9 @@ class BlueNPC(pygame.sprite.Sprite):
 		self.hidden_body_sprite = pygame.image.load(f'assets/img/NPC/normal_body_{i}_hidden.png')
 		self.hidden_eyes_sprite = pygame.image.load(f'assets/img/NPC/normal_eyes_{i}_hidden.png')
 
-		self.x_scale, self.y_scale = 2, 5
+		self.x_scale, self.y_scale = .5, .5 # for now 46*2 35*3
 		self.hidden = False 
-		self.cropped_height = 10 # @zkzh change this based on drawn NPC assets
+		self.cropped_height = 125 # @zkzh change this based on drawn NPC assets
 		self.body_image, self.eyes_image = self.use_normal_sprites() 
 
 		self.rect = self.body_image.get_rect()		
@@ -730,13 +733,14 @@ run = True
 
 while run:
 	# @zkzh REMOVE
-	# print("Debugging: current positions at", player.rect.x, player.rect.y)
+	print("Debugging: current positions at", player.rect.x, player.rect.y)
 	
 	clock.tick(fps)
 	
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
-			screen.blit(bg_img, (x, y))
+			screen.blit(bg_img, (x, y)) 
+	screen.blit(village_entrance_img, (2150-offset_x,1200-offset_y))
 	
 	world.draw(offset_x, offset_y)
 
