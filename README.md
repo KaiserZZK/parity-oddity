@@ -1,4 +1,4 @@
-# untitled-gem-platformer
+# parity-oddity
 
 A little game designed & built together with Micgelf 
 for [Pygame Jam 2025](https://itch.io/jam/pygame-jam-2025).
