@@ -6,3 +6,5 @@ before_puzzle_kid 320,1720
 start_puzzle 875,1970
 stairs 2155,1420
 end_puzzle 1370,2220
+bye_kid 1600,3700
+end_ridge 2950,3420

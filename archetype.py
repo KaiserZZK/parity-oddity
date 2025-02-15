@@ -1,5 +1,5 @@
+from typing import Optional
 import pygame 
-import math 
 from pygame.locals import * 
 from pygame import mixer
 import pickle 
@@ -60,6 +60,8 @@ coin_fx = pygame.mixer.Sound('assets/aud/blue_nugget.wav')
 coin_fx.set_volume(0.5)
 jump_fx = pygame.mixer.Sound('assets/aud/jump.wav')
 jump_fx.set_volume(0.5)
+kid_pop_fx = pygame.mixer.Sound('assets/aud/kid.mp3')
+kid_pop_fx.set_volume(0.5) 
 game_over_fx = pygame.mixer.Sound('assets/aud/game_over.wav')
 game_over_fx.set_volume(0.5) 
 
@@ -160,7 +162,11 @@ class World():
 					dark_nugget = DarkNugget(col_count * tile_size, row_count * tile_size + (tile_size // 2))
 					dark_nugget_group.add(dark_nugget)
 				if tile == 7:
-					coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
+					print("coin coords", col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
+					if col_count * tile_size + (tile_size // 2) >= 2800 and row_count * tile_size + (tile_size // 2) >= 3400:
+						coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2), True)
+					else:
+						coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
 					coin_group.add(coin)
 				if tile == 8:
 					# kid_spawn_points.append([col_count * tile_size, row_count * tile_size, False])
@@ -302,6 +308,7 @@ class Kid(pygame.sprite.Sprite):
 		self.hidden = False 
 		self.follow_offset = 100 
 		self.cropped_height = 125 
+		self.smiling = False 
 		self.body_image, self.eyes_image = self.use_normal_sprites() 
 
 		self.rect = self.body_image.get_rect()		
@@ -315,7 +322,6 @@ class Kid(pygame.sprite.Sprite):
 		self.move_counter = 0
   
 		self.should_hide = True 
-		self.smiling = False 
   
 	def use_normal_sprites(self):
 		self.scaled_body_width, self.scaled_body_height = self.body_sprite.get_width() * self.x_scale, self.body_sprite.get_height() * self.y_scale
@@ -393,7 +399,6 @@ class Kid(pygame.sprite.Sprite):
    
 	def walked_past(self, x):
 		if self.follow_from_left: 
-			# @zk change value as needed
 			return (x - self.rect.x) >= 100
 		else:
 			return (self.rect.x - x) <= 100
@@ -450,9 +455,10 @@ class DarkNugget(pygame.sprite.Sprite):
 				self.dragging = False  # Stop dragging when mouse released
   
 class Coin(pygame.sprite.Sprite):
-	def __init__(self, x, y):
+	def __init__(self, x, y, is_final: Optional[bool] = False):
+		self.is_final = is_final
 		pygame.sprite.Sprite.__init__(self)
-		img = pygame.image.load('assets/img/Item/blue_nuggets.png')
+		img = pygame.image.load('assets/img/Item/blue_nuggets.png') if (is_final==False) else pygame.image.load('assets/img/Player/rip.png') 
 		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
@@ -485,6 +491,7 @@ class Exit(pygame.sprite.Sprite):
 class Player():
 	def __init__(self, x, y):
 		self.reset(x, y) 
+		self.final = False 
   
 	def telekinesis(self):
 		global ever_changed
@@ -494,7 +501,13 @@ class Player():
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		for nugget in dark_nugget_group:
 			nugget.drag()
-  
+   
+	def final_form(self):
+		final_form = pygame.image.load(f'assets/img/Player/stein_red_1.png')
+		self.image = pygame.transform.scale(final_form, (80, 80))
+		screen.blit(self.image, (player.rect.x - offset_x, player.rect.y - offset_y))
+		self.final = True 
+
 	def bye(self, vy, curr_rot):
 		piece = pygame.image.load(f'assets/img/Player/rip.png')
 		scaled = pygame.transform.scale(piece, (80, 80))
@@ -691,12 +704,13 @@ class Player():
 			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y - 20))
 		elif self.carrying:
 			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y - 50))
+		elif self.final: 
+			final_form = pygame.image.load(f'assets/img/Player/stein_red_1.png')
+			self.image = pygame.transform.scale(final_form, (80, 80))
+			screen.blit(self.image, (player.rect.x - offset_x, player.rect.y - offset_y))
 		else:
 			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
-  
-		# @zk ROPE if caarrying things, use something like to account for height offset 
-		# screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
-  
+
 		return game_over 
 
 	def reset(self, x, y):
@@ -816,11 +830,12 @@ while run:
 	screen.blit(village_entrance_img, (2750 - offset_x, 1200 - offset_y))
 	if not bye_bye_reached:
 		screen.blit(orb_img, (1600 - offset_x, 3700- offset_y))
+	else:
+		screen.blit(orb_img, (1600 - offset_x, 3600- offset_y))
 	
 	world.draw(offset_x, offset_y)
  
 	if reached_ending:
-		print("lol")
 		if end_tri:
 			fade_surface.fill(WHITE)
 		else:
@@ -886,19 +901,35 @@ while run:
 				instruction = pygame.image.load('assets/img/Button/save_btn.png')
 				instruction = pygame.transform.scale(instruction, teach_box_size)
 				screen.blit(instruction, (700, 390))
-		# @zk FLY hard code a coordinate where 1) exit connected state, 2) kid spawn with no hide behavior, 3) happy sprite 
 		if frozen == True:
-			player.telekinesis()
+			if (not reached_ending):
+				player.telekinesis()
+			else:
+				player.final_form()
 		else:
 			game_over = player.update(game_over, offset_x, offset_y)
+   
+	if player.rect.x ==1600 and player.rect.y == 3670:
+		if not bye_bye_reached:
+			final_kid = Kid(1590, 3700, False)
+			final_kid.should_hide = False
+			final_kid.smiling = True 
+			kid_clones.add(final_kid) 
+			player.carrying = False 
+		bye_bye_reached = True 
 
 	if game_over == 0:
 		blob_group.update()
 		kid_clones.update()
 		#check if a coin has been collected
-		if pygame.sprite.spritecollide(player, coin_group, True):
+		collided_coin = pygame.sprite.spritecollide(player, coin_group, True)
+		if collided_coin:
 			score += 1
 			coin_fx.play()
+			if collided_coin[0].is_final:
+				player.final_form()
+				reached_ending = True 
+				end_tri = False
 			frozen = True 
 		if pygame.sprite.spritecollide(player, rope_group, True):
 			rope_equipped = True 
@@ -927,45 +958,20 @@ while run:
 	for coin in coin_group:
 		if not (coin.connected):
 			coin.draw(offset_x, offset_y)
-		else:
-			print("sdbcw")
 	for rope in rope_group:
 		rope.draw(offset_x, offset_y)
 	exit_group.draw(screen)
 
-	if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
-			(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
-		offset_x += player.vel_x * 10
-
-	if ((player.rect.top - offset_y >= screen_height - scroll_area_height) and player.vel_y > 0) or (
-			(player.rect.bottom - offset_y <= scroll_area_height) and player.vel_y < 0):
-		offset_y += player.vel_y * 2
-
-	# Lose condition met
-	if game_over == -1:
-		if restart_button.draw():
-			world_data = []
-			world = reset_level(level)
-			game_over = 0
-
-	# Level advance condition met  
-	if game_over == 1:
-		#reset game and go to next level
-		level += 1
-		if level <= max_levels:
-			#reset level
-			world_data = []
-			world = reset_level(level)
-			game_over = 0
-		else:
-			draw_text('YOU WIN!', font, blue, (screen_width // 2) - 140, screen_height // 2)
-			if restart_button.draw():
-				level = 1
-				#reset level
-				world_data = []
-				world = reset_level(level)
-				game_over = 0
-
+	if player.rect.x <= 3400:
+		if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
+				(player.rect.left - offset_x <= scroll_area_width) and player.vel_x < 0):
+				offset_x += player.vel_x * 10
+		if ((player.rect.top - offset_y >= screen_height - scroll_area_height) and player.vel_y > 0) or (
+				(player.rect.bottom - offset_y <= scroll_area_height) and player.vel_y < 0):
+			offset_y += player.vel_y * 2
+	else:
+		reached_ending = True 
+		end_tri = True 
 	
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
@@ -975,7 +981,7 @@ while run:
 				instruction_lr_viewed = True 
 			if event.key == pygame.K_SPACE:
 				instructuin_jump_viewed = True 
-			if frozen and event.key == pygame.K_q:
+			if frozen and event.key == pygame.K_q and (not reached_ending):
 				frozen = False 
 				ever_detransformed = True 
 			if rope_in_use and event.key == pygame.K_q:
@@ -1024,9 +1030,8 @@ while run:
 							currently_connected = coin
 							coin.kill() 
 							break 
-				elif rope_in_use:
-					# @zk SOUND idk about this; for now test it first
-					game_over_fx.play()
+				# elif rope_in_use:
+					# game_over_fx.play()
 			for kid_clone in kid_clones:
 				if kid_clone.rect.collidepoint((mouse_x+offset_x, mouse_y+offset_y)):
 					if kid_clone.rect.x == 600 and kid_clone.rect.y == 2900:
