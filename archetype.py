@@ -242,7 +242,6 @@ class BlueNPC(pygame.sprite.Sprite):
 			)
 		else:
 			self.body_image, self.eyes_image = self.use_normal_sprites()
-			
 			screen.blit(self.body_image, (self.rect.x - offset_x, self.rect.y - offset_y))
 			screen.blit(
 				self.eyes_image, 
@@ -277,7 +276,7 @@ class BlueNPC(pygame.sprite.Sprite):
 class Kid(pygame.sprite.Sprite):
 	def __init__(self, x, y, follow_from_left):
 		pygame.sprite.Sprite.__init__(self)
-		# blue_sprite = pygame.image.load('assets/img/Enemy/blob.png')
+		# @zkzh SOUND kid pop up sound is a must have
 		self.body_sprite = pygame.image.load(f'assets/img/NPC/kid_body.png')
 		self.eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes.png')
 
@@ -287,10 +286,10 @@ class Kid(pygame.sprite.Sprite):
 		self.spawn_x = x
 		self.follow_from_left = follow_from_left
 
-		self.x_scale, self.y_scale = 2, 5
+		self.x_scale, self.y_scale = .5, .5 
 		self.hidden = False 
 		self.follow_offset = 100 
-		self.cropped_height = 10 # @zkzh change this based on drawn assets
+		self.cropped_height = 125 
 		self.body_image, self.eyes_image = self.use_normal_sprites() 
 
 		self.rect = self.body_image.get_rect()		
@@ -732,7 +731,7 @@ scroll_area_width, scroll_area_height = 200, 160
 run = True 
 
 while run:
-	# @zkzh REMOVE
+	# @zkzh DEBUG REMOVE
 	print("Debugging: current positions at", player.rect.x, player.rect.y)
 	
 	clock.tick(fps)
@@ -857,7 +856,7 @@ while run:
 			if frozen and event.key == pygame.K_q:
 				frozen = False 
 				ever_detransformed = True 
-			# @zkzh REMOVE super hacky shit for dev  
+			# @zkzh DEBUG REMOVE super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
 			elif event.key == pygame.K_p:
