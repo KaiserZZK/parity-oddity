@@ -18,7 +18,7 @@ final_map_height = 2000
 final_map_width = 2800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
-# @zkzh to change later
+# @zk to change later
 pygame.display.set_caption('[ ] % 2 == 0 ?')
 
 # Define font
@@ -50,7 +50,7 @@ exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
 
 # Load audio assets
 pygame.mixer.music.load('assets/aud/music.wav')
-# @zkzh add some, if not all gathered new SFXs
+# @zk add some, if not all gathered new SFXs
 # pygame.mixer.music.play(-1, 0.0, 5000) # disabled for now; annoying af
 coin_fx = pygame.mixer.Sound('assets/aud/blue_nugget.wav')
 coin_fx.set_volume(0.5)
@@ -173,7 +173,7 @@ class BlueNPC(pygame.sprite.Sprite):
 
 		self.x_scale, self.y_scale = 2, 5
 		self.hidden = False 
-		self.cropped_height = 10 # @zkzh change this based on drawn assets
+		self.cropped_height = 10 # @zk change this based on drawn assets
 		self.body_image, self.eyes_image = self.use_normal_sprites() 
 
 		self.rect = self.body_image.get_rect()		
@@ -260,7 +260,7 @@ class BlueNPC(pygame.sprite.Sprite):
 		if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
 			self.hidden = True
 			
-			# @zkzh fancy this hide/unhide animation is tricky; screw it we use still image 
+			# @zk fancy this hide/unhide animation is tricky; screw it we use still image 
 		elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
 			self.hidden = False 
 				# self.body_image, self.eyes_image = self.use_normal_sprites()
@@ -589,7 +589,7 @@ instruction_lr_viewed = False
 instructuin_jump_viewed = False 
 
 # Kid
-# @zkzh not finalized yet 
+# @zk not finalized yet 
 kid_spawn_points = [
 	(2040, 400), # 1st level test; following from your left
 	(1530, 900)  # 2nd level test; following from you right
@@ -639,7 +639,7 @@ while run:
 			instruction = pygame.image.load('assets/img/Enemy/blob.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
-		# @zkzh still need tutorials for change & blue shenanigans; esp. the clicky ones
+		# @zk still need tutorials for change & blue shenanigans; esp. the clicky ones
 		if frozen == True:
 			player.telekinesis()
 		else:
@@ -710,7 +710,7 @@ while run:
 				instructuin_jump_viewed = True 
 			if frozen and event.key == pygame.K_q:
 				frozen = False 
-			# @zkzh super hacky shit for dev  
+			# @zk super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
 			elif event.key == pygame.K_p:

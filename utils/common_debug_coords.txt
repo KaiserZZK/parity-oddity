@@ -2,3 +2,4 @@ fall_off 3200 1370
 village_start 2450 1070 
 village_end 232,920
 right_before_kid 1010,1195
+start_puzzle 875,1970

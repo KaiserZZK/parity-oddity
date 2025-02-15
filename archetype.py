@@ -52,7 +52,7 @@ village_entrance_img = pygame.transform.scale(village_entrance_img, (tile_size*3
 
 # Load audio assets
 pygame.mixer.music.load('assets/aud/music.wav')
-# @zkzh add some, if not all gathered new SFXs
+# @zk SOUND some, if not all gathered new SFXs
 # pygame.mixer.music.play(-1, 0.0, 5000) # disabled for now; annoying af
 coin_fx = pygame.mixer.Sound('assets/aud/blue_nugget.wav')
 coin_fx.set_volume(0.5)
@@ -143,7 +143,9 @@ class World():
 					tile = (img, img_rect)
 					self.tile_list.append(tile)
 				if tile == 2:
-					kid_spawn_points.append([col_count * tile_size, row_count * tile_size, True])
+					# kid_spawn_points.append([col_count * tile_size, row_count * tile_size, True])
+					# @zk populate list manually, otherwise no good way to sort
+					print([col_count * tile_size, row_count * tile_size, True])
 				if tile == 3:
 					blob = BlueNPC((6-blue_id), col_count * tile_size - tile_size//2, row_count * tile_size)
 					blob_group.add(blob)
@@ -155,7 +157,8 @@ class World():
 					coin = Coin(col_count * tile_size + (tile_size // 2), row_count * tile_size + (tile_size // 2))
 					coin_group.add(coin)
 				if tile == 8:
-					kid_spawn_points.append([col_count * tile_size, row_count * tile_size, False])
+					# kid_spawn_points.append([col_count * tile_size, row_count * tile_size, False])
+					print([col_count * tile_size, row_count * tile_size, False])
 				col_count += 1
 			row_count += 1
 
@@ -261,7 +264,7 @@ class BlueNPC(pygame.sprite.Sprite):
 		if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
 			self.hidden = True
 			
-			# @zkzh fancy this hide/unhide animation is tricky; screw it we use still image 
+			# @zk FANCY this hide/unhide animation is tricky; screw it we use still image 
 		elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
 			self.hidden = False 
 				# self.body_image, self.eyes_image = self.use_normal_sprites()
@@ -273,10 +276,11 @@ class BlueNPC(pygame.sprite.Sprite):
 				# self.hide_offset = 0 
 				# self.rect.y -= self.scaled_body_height
 
+# @zk DEBUG REMOVE remove the * part in map if no time to add in more puzzles 
 class Kid(pygame.sprite.Sprite):
 	def __init__(self, x, y, follow_from_left):
 		pygame.sprite.Sprite.__init__(self)
-		# @zkzh SOUND kid pop up sound is a must have
+		# @zk SOUND kid pop up sound is a must have
 		self.body_sprite = pygame.image.load(f'assets/img/NPC/kid_body.png')
 		self.eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes.png')
 
@@ -368,7 +372,7 @@ class Kid(pygame.sprite.Sprite):
    
 	def walked_past(self, x):
 		if self.follow_from_left: 
-			# @zkzh change value as needed
+			# @zk change value as needed
 			return (x - self.rect.x) >= 100
 		else:
 			return (self.rect.x - x) <= 100
@@ -383,7 +387,7 @@ class Kid(pygame.sprite.Sprite):
 		if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
 			self.hidden = True
 			
-			# @zkzh fancy this hide/unhide animation is tricky; screw it we use still image 
+			# @zk FANCY this hide/unhide animation is tricky; screw it we use still image 
 		elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
 			self.hidden = False 
 				# self.body_image, self.eyes_image = self.use_normal_sprites()
@@ -714,7 +718,12 @@ instructuin_jump_viewed = False
 progressive_boxes_position = ()
 
 # Kid
-kid_spawn_points = []
+kid_spawn_points = [
+	[450, 950, False],
+ 	[550, 1900, True],
+	[2350, 1700, False],
+	[1650, 2250, False]
+]
 kid_spawn_threshold = 100
 current_clone = None 
 
@@ -731,11 +740,10 @@ scroll_area_width, scroll_area_height = 200, 160
 run = True 
 
 while run:
-	# @zkzh DEBUG REMOVE
-	print("Debugging: current positions at", player.rect.x, player.rect.y)
+	# @zk DEBUG REMOVE
+	# print("Debugging: current positions at", player.rect.x, player.rect.y)
 	
 	clock.tick(fps)
-	
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
 			screen.blit(bg_img, (x, y)) 
@@ -856,7 +864,7 @@ while run:
 			if frozen and event.key == pygame.K_q:
 				frozen = False 
 				ever_detransformed = True 
-			# @zkzh DEBUG REMOVE super hacky shit for dev  
+			# @zk DEBUG REMOVE super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
 			elif event.key == pygame.K_p:
