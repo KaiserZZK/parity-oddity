@@ -70,6 +70,10 @@ global ever_detransformed
 ever_detransformed = False 
 change_1_viewed = False 
 change_2_viewed = False 
+global ever_connected
+ever_connected = False 
+global ever_disconnected
+ever_disconnected = False 
 
 def draw_text(text, font, text_col, x, y):
 	img = font.render(text, True, text_col)
@@ -437,7 +441,18 @@ class Coin(pygame.sprite.Sprite):
   
 	def draw(self, offset_x, offset_y):
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
-		
+  
+
+class Rope(pygame.sprite.Sprite):
+	def __init__(self, x, y):
+		pygame.sprite.Sprite.__init__(self)
+		img = pygame.image.load('assets/img/Item/coin.png')
+		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
+		self.rect = self.image.get_rect()
+		self.rect.center = (x, y)
+  
+	def draw(self, offset_x, offset_y):
+		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))		
   
 class Exit(pygame.sprite.Sprite):
 	def __init__(self, x, y):
@@ -654,6 +669,9 @@ class Player():
 		#draw player onto screen
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
   
+		# @zk ROPE if caarrying things, use something like to account for height offset 
+		# screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
+  
 		return game_over 
 
 	def reset(self, x, y):
@@ -696,6 +714,7 @@ blob_group = pygame.sprite.Group()
 kid_clones = pygame.sprite.Group()
 dark_nugget_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
+rope_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()  
 
 # Dev functions
@@ -722,10 +741,16 @@ kid_spawn_points = [
 	[450, 950, False],
  	[550, 1900, True],
 	[2350, 1700, False],
-	[1650, 2250, False]
+	[1500, 2250, False]
 ]
-kid_spawn_threshold = 100
+kid_spawn_threshold = 50
 current_clone = None 
+
+# Rope  
+rope_position = (950, 2370)
+rope_equipped = False 
+rope_in_use = False
+rope_group.add(Rope(rope_position[0], rope_position[1]))
 
 #load in level data and create world
 if path.exists(f'level{level}_data'):
@@ -781,7 +806,17 @@ while run:
 			else:
 				instruction = pygame.image.load('assets/img/Tutorial/changed_3.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
-			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))			
+			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))	
+		elif rope_equipped and player.rect.x < 900:
+			if not ever_connected:
+				instruction = pygame.image.load('assets/img/Enemy/trap.png')
+				instruction = pygame.transform.scale(instruction, teach_box_size)
+				screen.blit(instruction, (player.rect.x - offset_x + 200, player.rect.y - offset_y - 200))
+			elif not ever_disconnected:
+				instruction = pygame.image.load('assets/img/Enemy/blob.png')
+				instruction = pygame.transform.scale(instruction, teach_box_size)
+				screen.blit(instruction, (player.rect.x - offset_x + 200, player.rect.y - offset_y - 200))
+		# @zk FLY hard code a coordinate where 1) exit connected state, 2) kid spawn with no hide behavior, 3) happy sprite 
 		if frozen == True:
 			player.telekinesis()
 		else:
@@ -795,6 +830,8 @@ while run:
 			score += 1
 			coin_fx.play()
 			frozen = True 
+		if pygame.sprite.spritecollide(player, rope_group, True):
+			rope_equipped = True 
 			
 		# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
   
@@ -817,6 +854,8 @@ while run:
 		dark_nugget.draw(offset_x, offset_y)
 	for coin in coin_group:
 		coin.draw(offset_x, offset_y)
+	for rope in rope_group:
+		rope.draw(offset_x, offset_y)
 	exit_group.draw(screen)
 
 	if ((player.rect.right - offset_x >= screen_width - scroll_area_width) and player.vel_x > 0) or (
@@ -864,6 +903,10 @@ while run:
 			if frozen and event.key == pygame.K_q:
 				frozen = False 
 				ever_detransformed = True 
+			if rope_in_use and event.key == pygame.K_q:
+				print("2.1 disconnected with object")
+				rope_in_use = False 
+				ever_disconnected = True
 			# @zk DEBUG REMOVE super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
@@ -886,6 +929,23 @@ while run:
 					change_1_viewed = True  
 				elif not change_2_viewed:
 					change_2_viewed = True 
+			if rope_equipped:
+				if not rope_in_use:
+					print("0. standby")
+					# mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1)  # Create a 1x1 rect at mouse position
+					# mouse_rect.rect.x, mouse_rect.rect.y = mouse_x, mouse_y
+					# if pygame.sprite.spritecollide(mouse_rect, coin_group, True):
+					for coin in coin_group:
+						print("coin collision inspection", coin.rect, mouse_x, mouse_y)
+						if coin.rect.collidepoint((mouse_x+offset_x, mouse_y+offset_y)):  # Check if mouse is inside sprite's rect
+							print("1. selected an object to connect ")
+							coin_fx.play()
+							ever_connected = True  
+							rope_in_use = True 
+							break 
+				elif rope_in_use:
+					print("2.2 print already connected to one!")
+
 			
 	pygame.display.update() 
 			

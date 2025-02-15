@@ -70,7 +70,7 @@ def draw_world(map_height, map_width, scale_factor, dx, dy):
 		for col in range(map_cols):
 			if world_data[row][col] > 0:
 				if world_data[row][col] == 1:
-					#dirt blocks
+					#dirt blocks (regular tile)
 					i = tile_variant(row, col)
 					img = pygame.transform.scale(dirt_imgs[i-1], (tile_size * scale_factor, tile_size * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
@@ -79,24 +79,24 @@ def draw_world(map_height, map_width, scale_factor, dx, dy):
 					img = pygame.transform.scale(grass_img, (tile_size * scale_factor, tile_size * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, row * tile_size * scale_factor + dy))
 				if world_data[row][col] == 3:
-					#enemy blocks
+					#enemy blocks (Blue NPCs)
 					img = pygame.transform.scale(blob_img, (tile_size * scale_factor, int(tile_size * 0.75) * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, (row * tile_size + (tile_size * 0.25)) * scale_factor + dy))
 				if world_data[row][col] == 4:
-					#horizontally moving platform
+					#horizontally moving platform (not used)
 					img = pygame.transform.scale(platform_x_img, (tile_size, tile_size // 2))
 					screen.blit(img, (col * tile_size, row * tile_size))
 				if world_data[row][col] == 5:
-					#vertically moving platform
+					#vertically moving platform (not used)
 					img = pygame.transform.scale(platform_y_img, (tile_size, tile_size // 2))
 					screen.blit(img, (col * tile_size, row * tile_size))
 				if world_data[row][col] == 6:
-					#lava
+					#lava (dark nuggets)
 					i = tile_variant(row, col)
 					img = pygame.transform.scale(lava_imgs[i-1], (tile_size * scale_factor, (tile_size // 2) * scale_factor))
 					screen.blit(img, (col * tile_size * scale_factor + dx, (row * tile_size + (tile_size // 2)) * scale_factor + dy))
 				if world_data[row][col] == 7:
-					#coin
+					#coin (Blue nuggets)
 					img = pygame.transform.scale(coin_img, ((tile_size // 2) * scale_factor, (tile_size // 2) * scale_factor))
 					screen.blit(img, ((col * tile_size + (tile_size // 4)) * scale_factor + dx, (row * tile_size + (tile_size // 4)) * scale_factor + dy))
 				if world_data[row][col] == 8:
