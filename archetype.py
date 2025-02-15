@@ -48,6 +48,8 @@ start_img = pygame.image.load('assets/img/Button/start_btn.png')
 exit_img = pygame.image.load('assets/img/Button/exit_btn.png')
 village_entrance_img = pygame.image.load('assets/img/NPC/entrance.png')
 village_entrance_img = pygame.transform.scale(village_entrance_img, (tile_size*3, tile_size*3))
+orb_img = pygame.image.load('assets/img/Item/orb_@micgelf.png')
+orb_img = pygame.transform.scale(orb_img, (tile_size, tile_size))
 
 
 # Load audio assets
@@ -287,6 +289,8 @@ class Kid(pygame.sprite.Sprite):
 		# @zk SOUND kid pop up sound is a must have
 		self.body_sprite = pygame.image.load(f'assets/img/NPC/kid_body.png')
 		self.eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes.png')
+		# @zk draw better one for this 
+		self.happy_eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes_happy.png')
 
 		self.hidden_body_sprite = pygame.image.load(f'assets/img/NPC/kid_body_hidden.png')
 		self.hidden_eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes_hidden.png')
@@ -310,6 +314,9 @@ class Kid(pygame.sprite.Sprite):
 		self.move_direction = 1
 		self.move_counter = 0
   
+		self.should_hide = True 
+		self.smiling = False 
+  
 	def use_normal_sprites(self):
 		self.scaled_body_width, self.scaled_body_height = self.body_sprite.get_width() * self.x_scale, self.body_sprite.get_height() * self.y_scale
 		body_image = pygame.transform.scale(
@@ -320,13 +327,23 @@ class Kid(pygame.sprite.Sprite):
 			)
 		)
 		scaled_eyes_width, scaled_eyes_height = self.eyes_sprite.get_width() * self.x_scale, self.eyes_sprite.get_height() * self.y_scale
-		eyes_image = pygame.transform.scale(
-			self.eyes_sprite, 
-			(
-				scaled_eyes_width,
-				scaled_eyes_height
+		
+		if not self.smiling:
+			eyes_image = pygame.transform.scale(
+				self.eyes_sprite, 
+				(
+					scaled_eyes_width,
+					scaled_eyes_height
+				)
 			)
-		)
+		else:
+			eyes_image = pygame.transform.scale(
+				self.happy_eyes_sprite, 
+				(
+					scaled_eyes_width,
+					scaled_eyes_height
+				)
+			)
   
 		return body_image, eyes_image
   
@@ -388,20 +405,21 @@ class Kid(pygame.sprite.Sprite):
 		self.eye_gaze_offset_x = player_proximity_x * .02
 		self.eye_gaze_offset_y = player_proximity_y * .02
 		hide_threshold_x, hide_threshold_y = 200, 100
-		if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
-			self.hidden = True
-			
-			# @zk FANCY this hide/unhide animation is tricky; screw it we use still image 
-		elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
-			self.hidden = False 
+		if self.should_hide:
+			if abs(player_proximity_x) < hide_threshold_x and not self.hidden:
+				self.hidden = True
+				
+				# @zk FANCY this hide/unhide animation is tricky; screw it we use still image 
+			elif abs(player_proximity_x) >= hide_threshold_x and self.hidden:
+				self.hidden = False 
+					# self.body_image, self.eyes_image = self.use_normal_sprites()
 				# self.body_image, self.eyes_image = self.use_normal_sprites()
-			# self.body_image, self.eyes_image = self.use_normal_sprites()
-				# self.hide_offset = 0
-				# while self.hide_offset < self.scaled_body_height:
-				# 	self.hide_offset += .05
-				# 	self.draw(0, self.hide_offset)
-				# self.hide_offset = 0 
-				# self.rect.y -= self.scaled_body_height
+					# self.hide_offset = 0
+					# while self.hide_offset < self.scaled_body_height:
+					# 	self.hide_offset += .05
+					# 	self.draw(0, self.hide_offset)
+					# self.hide_offset = 0 
+					# self.rect.y -= self.scaled_body_height
 
 
 class DarkNugget(pygame.sprite.Sprite):
@@ -668,7 +686,13 @@ class Player():
 				self.rect.y -= 5
 
 		#draw player onto screen
-		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
+		# @zk TODO add sprites for carrying & connected respectively 
+		if self.connected:
+			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y - 20))
+		elif self.carrying:
+			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y - 50))
+		else:
+			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
   
 		# @zk ROPE if caarrying things, use something like to account for height offset 
 		# screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
@@ -676,6 +700,8 @@ class Player():
 		return game_over 
 
 	def reset(self, x, y):
+		self.connected = False 
+		self.carrying = False 
 		self.images_right = []
 		self.images_left = []
 		self.fly_images_right = []
@@ -740,12 +766,15 @@ progressive_boxes_position = ()
 # Kid
 kid_spawn_points = [
 	[450, 950, False],
- 	[550, 1900, True],
+ 	[500, 1800, True],
 	[2350, 1700, False],
-	[1500, 2250, False]
+	[1500, 2250, False],
+	[600, 2950, True]
 ]
 kid_spawn_threshold = 50
 current_clone = None 
+kid_asking = True 
+bye_bye_reached = False 
 
 # Rope  
 rope_position = (950, 2370)
@@ -764,19 +793,53 @@ world = World(world_data)
 offset_x, offset_y = 600, 0 
 scroll_area_width, scroll_area_height = 200, 160
 
+# for ending 
+reached_ending = False 
+end_tri= False 
+fade_surface = pygame.Surface((screen_width, screen_height))
+
+BLACK = (0,0,0)
+WHITE = (255, 255, 255)
+fade_surface.fill(WHITE)
+# Alpha value (0 = fully transparent, 255 = fully black)
+alpha = 0
+running = True
+fading = True  # Control fade animation
+
 run = True 
 
-while run:
-	# @zk DEBUG REMOVE
-	# print("Debugging: current positions at", player.rect.x, player.rect.y)
-	
+while run:	
 	clock.tick(fps)
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
 			screen.blit(bg_img, (x, y)) 
-	screen.blit(village_entrance_img, (2750-offset_x,1200-offset_y))
+	screen.blit(village_entrance_img, (2750 - offset_x, 1200 - offset_y))
+	if not bye_bye_reached:
+		screen.blit(orb_img, (1600 - offset_x, 3700- offset_y))
 	
 	world.draw(offset_x, offset_y)
+ 
+	if reached_ending:
+		print("lol")
+		if end_tri:
+			fade_surface.fill(WHITE)
+		else:
+			fade_surface.fill(BLACK)
+		screen.blit(fade_surface, (0, 0))  # Draw fade effect	
+		if fading:
+			# @zk adjust fading speed if needed
+			alpha += 1  # Increase darkness
+			if alpha >= 255:
+				alpha = 255  # Ensure it doesn't exceed max value
+				fading = False  # Stop fading once fully black
+			fade_surface.set_alpha(alpha)  # Apply transparency
+		# @zk ending images
+		else: # also draw ending images after fading is done
+			if end_tri:
+				screen.blit(exit_img, (0, 0))  # Draw fade effect		
+			else:
+				screen.blit(village_entrance_img, (0, 0))  # Draw fade effect		
+
 
 	if not landed: 
 		landed, fall_speed = sqr.crash_land(fall_speed)
@@ -809,6 +872,7 @@ while run:
 				instruction = pygame.image.load('assets/img/Tutorial/changed_3.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))	
+		# @zk uncreated assets
 		elif rope_equipped and player.rect.x < 900:
 			if not ever_connected:
 				instruction = pygame.image.load('assets/img/Enemy/trap.png')
@@ -818,6 +882,10 @@ while run:
 				instruction = pygame.image.load('assets/img/Enemy/blob.png')
 				instruction = pygame.transform.scale(instruction, teach_box_size)
 				screen.blit(instruction, (player.rect.x - offset_x + 200, player.rect.y - offset_y - 200))
+			if player.rect.y >= 2900 and player.rect.x >= 400 and (kid_asking):
+				instruction = pygame.image.load('assets/img/Button/save_btn.png')
+				instruction = pygame.transform.scale(instruction, teach_box_size)
+				screen.blit(instruction, (700, 390))
 		# @zk FLY hard code a coordinate where 1) exit connected state, 2) kid spawn with no hide behavior, 3) happy sprite 
 		if frozen == True:
 			player.telekinesis()
@@ -836,7 +904,7 @@ while run:
 			rope_equipped = True 
 			
 		# draw_text('X ' + str(score), font_score, white, tile_size - 10, 10)
-  
+
 	if len(kid_spawn_points) > 0:
 		x, y, follow_from_left = kid_spawn_points[0]
 		if current_clone is not None:
@@ -846,6 +914,8 @@ while run:
 			if current_clone == None:
 				kx, ky, f = kid_spawn_points.pop(0)
 				current_clone = Kid(kx, ky, f)
+				if len(kid_spawn_points) == 0:
+					current_clone.should_hide = False 
 				kid_clones.add(current_clone)
 	
 	for npc in blob_group:
@@ -913,14 +983,13 @@ while run:
 				rope_in_use = False 
 				ever_disconnected = True
 				if currently_connected is not None:
-					print("spiut it back")
-					# @zk NOTE this connection logic only applies to nuggets; may not apply for kid 
 					coin_group.add(Coin(player.rect.x, player.rect.y - 100))
-					# currently_connected.conncted = False  
-					# currently_connected.rect.center = 
-					# currently_connected.draw(offset_x, offset_y)
+					player.connected = False 
 					currently_connected = None 
 			# @zk DEBUG REMOVE super hacky shit for dev  
+			if event.key == pygame.K_c:
+				print("Debugging coords: current positions at", player.rect.x, player.rect.y)
+				text = ""
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
 			elif event.key == pygame.K_p:
@@ -937,6 +1006,7 @@ while run:
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			mouse_x, mouse_y = event.pos  # Get mouse position
 			# Check if click is inside the rectangle
+			print("debug mouse pos", mouse_x, mouse_y)
 			if 517 <= mouse_x <= 517+teach_box_size[0]*2 and 90 <= mouse_y <= 90+teach_box_size[1]*2:
 				if not change_1_viewed:
 					change_1_viewed = True  
@@ -944,23 +1014,27 @@ while run:
 					change_2_viewed = True 
 			if rope_equipped:
 				if not rope_in_use:
-					print("0. standby")
 					for coin in coin_group:
-						print("coin collision inspection", coin.rect, mouse_x, mouse_y)
 						if coin.rect.collidepoint((mouse_x+offset_x, mouse_y+offset_y)):  # Check if mouse is inside sprite's rect
-							print("1. selected an object to connect ")
 							coin_fx.play()
 							ever_connected = True  
 							rope_in_use = True 
 							coin.connected = True 
+							player.connected = True 
 							currently_connected = coin
 							coin.kill() 
 							break 
 				elif rope_in_use:
 					# @zk SOUND idk about this; for now test it first
 					game_over_fx.play()
+			for kid_clone in kid_clones:
+				if kid_clone.rect.collidepoint((mouse_x+offset_x, mouse_y+offset_y)):
+					if kid_clone.rect.x == 600 and kid_clone.rect.y == 2900:
+						kid_asking = False 
+						kid_clone.kill()
+						player.carrying = True 
 
-			
+				
 	pygame.display.update() 
 			
 
