@@ -50,7 +50,10 @@ village_entrance_img = pygame.image.load('assets/img/NPC/entrance.png')
 village_entrance_img = pygame.transform.scale(village_entrance_img, (tile_size*3, tile_size*3))
 orb_img = pygame.image.load('assets/img/Item/orb_@micgelf.png')
 orb_img = pygame.transform.scale(orb_img, (tile_size, tile_size))
-
+end_tri_img = pygame.image.load('assets/img/Button/ending_T.png')
+end_tri_img = pygame.transform.scale(end_tri_img, (screen_width, screen_height))
+end_sqr_img = pygame.image.load('assets/img/Button/ending_S.png')
+end_sqr_img = pygame.transform.scale(end_sqr_img, (screen_width, screen_height))
 
 # Load audio assets
 pygame.mixer.music.load('assets/aud/music.wav')
@@ -471,7 +474,7 @@ class Coin(pygame.sprite.Sprite):
 class Rope(pygame.sprite.Sprite):
 	def __init__(self, x, y):
 		pygame.sprite.Sprite.__init__(self)
-		img = pygame.image.load('assets/img/Item/coin.png')
+		img = pygame.image.load('assets/img/Item/coin_new.png')
 		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
@@ -503,7 +506,7 @@ class Player():
 			nugget.drag()
    
 	def final_form(self):
-		final_form = pygame.image.load(f'assets/img/Player/stein_red_1.png')
+		final_form = pygame.image.load(f'assets/img/Player/final.png')
 		self.image = pygame.transform.scale(final_form, (80, 80))
 		screen.blit(self.image, (player.rect.x - offset_x, player.rect.y - offset_y))
 		self.final = True 
@@ -701,14 +704,25 @@ class Player():
 		#draw player onto screen
 		# @zk TODO add sprites for carrying & connected respectively 
 		if self.connected:
-			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y - 20))
+			img = pygame.image.load('assets/img/Item/blue_nuggets.png')
+			pygame.transform.scale(img, (tile_size // 2, tile_size // 2)) 
+			screen.blit(img, (self.rect.x - offset_x, self.rect.y - offset_y - img.get_height()))
+			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		elif self.carrying:
-			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y - 50))
+			body_sprite = pygame.image.load(f'assets/img/NPC/kid_body.png')
+			eyes_sprite = pygame.image.load(f'assets/img/NPC/kid_eyes_happy.png')
+			pygame.transform.scale(body_sprite, (20, 20)) 
+			pygame.transform.scale(eyes_sprite, (20, 20))
+			screen.blit(body_sprite, (self.rect.x - offset_x, self.rect.y - offset_y - body_sprite.get_height()))
+			screen.blit(eyes_sprite, (self.rect.x - offset_x, self.rect.y - offset_y - eyes_sprite.get_height()))
+		# @zk draw better one for this 
+
+			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		elif self.final: 
-			final_form = pygame.image.load(f'assets/img/Player/stein_red_1.png')
+			final_form = pygame.image.load(f'assets/img/Player/final.png')
 			self.image = pygame.transform.scale(final_form, (80, 80))
 			screen.blit(self.image, (player.rect.x - offset_x, player.rect.y - offset_y))
-		else:
+		elif self.image is not None:
 			screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 
 		return game_over 
@@ -851,9 +865,10 @@ while run:
 		# @zk ending images
 		else: # also draw ending images after fading is done
 			if end_tri:
-				screen.blit(exit_img, (0, 0))  # Draw fade effect		
+				screen.blit(end_tri_img, (0, 0))  # Draw fade effect		
 			else:
-				screen.blit(village_entrance_img, (0, 0))  # Draw fade effect		
+				player.image = None
+				screen.blit(end_sqr_img, (0, 0))  # Draw fade effect		
 
 
 	if not landed: 
@@ -890,15 +905,15 @@ while run:
 		# @zk uncreated assets
 		elif rope_equipped and player.rect.x < 900:
 			if not ever_connected:
-				instruction = pygame.image.load('assets/img/Enemy/trap.png')
+				instruction = pygame.image.load('assets/img/Enemy/connect.png')
 				instruction = pygame.transform.scale(instruction, teach_box_size)
 				screen.blit(instruction, (player.rect.x - offset_x + 200, player.rect.y - offset_y - 200))
 			elif not ever_disconnected:
-				instruction = pygame.image.load('assets/img/Enemy/blob.png')
+				instruction = pygame.image.load('assets/img/Enemy/disconnect.png')
 				instruction = pygame.transform.scale(instruction, teach_box_size)
 				screen.blit(instruction, (player.rect.x - offset_x + 200, player.rect.y - offset_y - 200))
 			if player.rect.y >= 2900 and player.rect.x >= 400 and (kid_asking):
-				instruction = pygame.image.load('assets/img/Button/save_btn.png')
+				instruction = pygame.image.load('assets/img/Button/kids_ask_2.png')
 				instruction = pygame.transform.scale(instruction, teach_box_size)
 				screen.blit(instruction, (700, 390))
 		if frozen == True:
@@ -906,10 +921,10 @@ while run:
 				player.telekinesis()
 			else:
 				player.final_form()
-		else:
+		elif not reached_ending:
 			game_over = player.update(game_over, offset_x, offset_y)
    
-	if player.rect.x ==1600 and player.rect.y == 3670:
+	if 1580 <= player.rect.x <= 1620 and 3650 <= player.rect.y <= 3700:
 		if not bye_bye_reached:
 			final_kid = Kid(1590, 3700, False)
 			final_kid.should_hide = False

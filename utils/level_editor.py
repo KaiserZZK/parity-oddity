@@ -40,6 +40,7 @@ load_img = pygame.image.load('assets/img/Button/load_btn.png')
 
 #define game variables
 clicked = False
+dragged = False 
 level = 1
 
 #define colours
@@ -47,6 +48,8 @@ white = (255, 255, 255)
 green = (144, 201, 120)
 
 font = pygame.font.SysFont('Futura', 24)
+
+click_editing = False 
 
 #function for outputting text onto the screen
 def draw_text(text, font, text_col, x, y):
@@ -230,24 +233,49 @@ while run:
 		if event.type == pygame.QUIT:
 			run = False
 		#mouseclicks to change tiles
-		if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
-			clicked = True 
-			pos = pygame.mouse.get_pos()
-			x = int((pos[0] - offset_x) // (tile_size * scale_factor)) 
-			y = int((pos[1] - offset_y) // (tile_size * scale_factor)) 
-			#check that the coordinates are within the tile area
-			if x < (map_width//tile_size) and y < (map_height//tile_size):
-				#update tile value
-				if pygame.mouse.get_pressed()[0] == 1:
-					world_data[y][x] += 1
-					if world_data[y][x] > 8:
-						world_data[y][x] = 0
-				elif pygame.mouse.get_pressed()[2] == 1:
-					world_data[y][x] -= 1
-					if world_data[y][x] < 0:
-						world_data[y][x] = 8
-		if event.type == pygame.MOUSEBUTTONUP:
-			clicked = False
+		if click_editing:
+			if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
+				clicked = True 
+				pos = pygame.mouse.get_pos()
+				x = int((pos[0] - offset_x) // (tile_size * scale_factor)) 
+				y = int((pos[1] - offset_y) // (tile_size * scale_factor)) 
+				#check that the coordinates are within the tile area
+				if x < (map_width//tile_size) and y < (map_height//tile_size):
+					#update tile value
+					if pygame.mouse.get_pressed()[0] == 1:
+						world_data[y][x] += 1
+						if world_data[y][x] > 8:
+							world_data[y][x] = 0
+					elif pygame.mouse.get_pressed()[2] == 1:
+						world_data[y][x] -= 1
+						if world_data[y][x] < 0:
+							world_data[y][x] = 8
+			if event.type == pygame.MOUSEBUTTONUP:
+				clicked = False
+		else:
+			if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
+				start_pos = pygame.mouse.get_pos()
+				clicked = True 
+			if event.type == pygame.MOUSEBUTTONUP:
+				sx = int((start_pos[0] - offset_x) // (tile_size * scale_factor)) 
+				sy = int((start_pos[1] - offset_y) // (tile_size * scale_factor)) 
+				pos = pygame.mouse.get_pos()
+				ex = int((pos[0] - offset_x) // (tile_size * scale_factor)) 
+				ey = int((pos[1] - offset_y) // (tile_size * scale_factor)) 
+				#check that the coordinates are within the tile area
+				for x in range(sx, ex+1):
+					for y in range(sy, ey+1):
+						if x < (map_width//tile_size) and y < (map_height//tile_size):
+							#update tile value
+							# if pygame.mouse.get_pressed()[0] == 1:
+							world_data[y][x] += 1
+							# 	if world_data[y][x] > 8:
+							# 		world_data[y][x] = 0
+							# elif pygame.mouse.get_pressed()[2] == 1:
+							# 	world_data[y][x] -= 1
+							# 	if world_data[y][x] < 0:
+							# 		world_data[y][x] = 8
+				clicked = False
 		#up and down key presses to change level number
 		if event.type == pygame.KEYDOWN:
 			# Originally used for level increment; we change it to panning instead
@@ -272,6 +300,8 @@ while run:
 	
 			elif event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
+			elif event.key == pygame.K_c:
+				click_eidting = True 
 			else:
 				text += event.unicode 
     
