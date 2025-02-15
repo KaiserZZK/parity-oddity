@@ -145,7 +145,7 @@ class World():
 				if tile == 2:
 					kid_spawn_points.append([col_count * tile_size, row_count * tile_size, True])
 				if tile == 3:
-					blob = BlueNPC(blue_id, col_count * tile_size, row_count * tile_size)
+					blob = BlueNPC((6-blue_id), col_count * tile_size - tile_size//2, row_count * tile_size)
 					blob_group.add(blob)
 					blue_id += 1
 				if tile == 6:
@@ -173,9 +173,9 @@ class BlueNPC(pygame.sprite.Sprite):
 		self.hidden_body_sprite = pygame.image.load(f'assets/img/NPC/normal_body_{i}_hidden.png')
 		self.hidden_eyes_sprite = pygame.image.load(f'assets/img/NPC/normal_eyes_{i}_hidden.png')
 
-		self.x_scale, self.y_scale = .5, .5 # for now 46*2 35*3
+		self.x_scale, self.y_scale = .5, .5 
 		self.hidden = False 
-		self.cropped_height = 125 # @zkzh change this based on drawn NPC assets
+		self.cropped_height = 125 
 		self.body_image, self.eyes_image = self.use_normal_sprites() 
 
 		self.rect = self.body_image.get_rect()		
@@ -475,7 +475,7 @@ class Player():
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 		friction = 0.95
 		speed *= friction
-		while self.rect.x < 422:
+		while self.rect.x < 1022:
 			self.rect.x += speed
 			return (speed, False)
 		
@@ -686,9 +686,9 @@ class Player():
 		self.jump_count = 0
 
 # Main game loop   
-player = Player(51, 465) # spawn with sliding after fall; may change depending on map changes
-sqr = Player(51, screen_height - 800)
-flown_off = Player(51, 470)
+player = Player(651, 465) # spawn with sliding after fall; may change depending on map changes
+sqr = Player(651, screen_height - 800)
+flown_off = Player(651, 470)
 blob_group = pygame.sprite.Group()
 kid_clones = pygame.sprite.Group()
 dark_nugget_group = pygame.sprite.Group()
@@ -726,7 +726,7 @@ if path.exists(f'level{level}_data'):
 
 world = World(world_data)
 
-offset_x, offset_y = 0, 0 
+offset_x, offset_y = 600, 0 
 scroll_area_width, scroll_area_height = 200, 160
 
 run = True 
@@ -740,7 +740,7 @@ while run:
 	for y in range(0, screen_height, bg_tile_height):
 		for x in range(0, screen_width, bg_tile_width): 
 			screen.blit(bg_img, (x, y)) 
-	screen.blit(village_entrance_img, (2150-offset_x,1200-offset_y))
+	screen.blit(village_entrance_img, (2750-offset_x,1200-offset_y))
 	
 	world.draw(offset_x, offset_y)
 
@@ -753,16 +753,16 @@ while run:
 		if not instruction_lr_viewed:
 			instruction = pygame.image.load('assets/img/Tutorial/left_right.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
-			screen.blit(instruction, (player.rect.x, player.rect.y-200))
-		elif not instructuin_jump_viewed and player.rect.x >= 840:
+			screen.blit(instruction, (player.rect.x - offset_x , player.rect.y - offset_y - 200))
+		elif not instructuin_jump_viewed and player.rect.x >= 1440:
 			instruction = pygame.image.load('assets/img/Tutorial/jump.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
-		elif not glide_ever_used and player.rect.x >= 1160:
+		elif not glide_ever_used and player.rect.x >= 1760:
 			instruction = pygame.image.load('assets/img/Tutorial/gliding.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
-		elif not ever_changed and player.rect.x >= 2112:
+		elif not ever_changed and player.rect.x >= 2712:
 			instruction = pygame.image.load('assets/img/Tutorial/changing.png')
 			instruction = pygame.transform.scale(instruction, teach_box_size)
 			screen.blit(instruction, (player.rect.x - offset_x - 200, player.rect.y - offset_y - 200))
