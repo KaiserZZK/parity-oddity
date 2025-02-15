@@ -438,6 +438,7 @@ class Coin(pygame.sprite.Sprite):
 		self.image = pygame.transform.scale(img, (tile_size // 2, tile_size // 2))
 		self.rect = self.image.get_rect()
 		self.rect.center = (x, y)
+		self.connected = False 
   
 	def draw(self, offset_x, offset_y):
 		screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
@@ -751,6 +752,7 @@ rope_position = (950, 2370)
 rope_equipped = False 
 rope_in_use = False
 rope_group.add(Rope(rope_position[0], rope_position[1]))
+currently_connected = None 
 
 #load in level data and create world
 if path.exists(f'level{level}_data'):
@@ -853,7 +855,10 @@ while run:
 	for dark_nugget in dark_nugget_group:
 		dark_nugget.draw(offset_x, offset_y)
 	for coin in coin_group:
-		coin.draw(offset_x, offset_y)
+		if not (coin.connected):
+			coin.draw(offset_x, offset_y)
+		else:
+			print("sdbcw")
 	for rope in rope_group:
 		rope.draw(offset_x, offset_y)
 	exit_group.draw(screen)
@@ -907,6 +912,14 @@ while run:
 				print("2.1 disconnected with object")
 				rope_in_use = False 
 				ever_disconnected = True
+				if currently_connected is not None:
+					print("spiut it back")
+					# @zk NOTE this connection logic only applies to nuggets; may not apply for kid 
+					coin_group.add(Coin(player.rect.x, player.rect.y - 100))
+					# currently_connected.conncted = False  
+					# currently_connected.rect.center = 
+					# currently_connected.draw(offset_x, offset_y)
+					currently_connected = None 
 			# @zk DEBUG REMOVE super hacky shit for dev  
 			if event.key == pygame.K_BACKSPACE:
 				text =  text[:-1]
@@ -932,9 +945,6 @@ while run:
 			if rope_equipped:
 				if not rope_in_use:
 					print("0. standby")
-					# mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1)  # Create a 1x1 rect at mouse position
-					# mouse_rect.rect.x, mouse_rect.rect.y = mouse_x, mouse_y
-					# if pygame.sprite.spritecollide(mouse_rect, coin_group, True):
 					for coin in coin_group:
 						print("coin collision inspection", coin.rect, mouse_x, mouse_y)
 						if coin.rect.collidepoint((mouse_x+offset_x, mouse_y+offset_y)):  # Check if mouse is inside sprite's rect
@@ -942,9 +952,13 @@ while run:
 							coin_fx.play()
 							ever_connected = True  
 							rope_in_use = True 
+							coin.connected = True 
+							currently_connected = coin
+							coin.kill() 
 							break 
 				elif rope_in_use:
-					print("2.2 print already connected to one!")
+					# @zk SOUND idk about this; for now test it first
+					game_over_fx.play()
 
 			
 	pygame.display.update() 
