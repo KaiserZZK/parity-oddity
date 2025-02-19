@@ -3,7 +3,7 @@
 A little game designed & built together with Micgelf 
 for [Pygame Jam 2025](https://itch.io/jam/pygame-jam-2025).
 
-Game could be accessible on itch [here](https://bepsi-shiki.itch.io/parity-oddity);
+Game could be accessible on itch [here]([https://bepsi-shiki.itch.io/parity-oddity](https://hyikkup-shiki.itch.io/parity-oddity));
 playable on both MacOS (Intel Chip & Apple Silicon) and Windows!
 
 The `main` branch contains code for a generic platformer and a 
