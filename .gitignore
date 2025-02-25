@@ -173,3 +173,7 @@ cython_debug/
 scroll/*
 
 *.exe
+
+.DS_Store
+.idea/*
+wb_test/*
